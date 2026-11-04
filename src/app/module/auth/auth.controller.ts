@@ -96,10 +96,15 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 });
 
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
-	if (!req.cookies.refreshToken) {
+	const authHeader = req.headers.authorization;
+	const bearerToken =
+		authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
+	const token = bearerToken ?? req.cookies?.refreshToken;
+
+	if (!token) {
 		throw new Error("Refresh token is missing");
 	}
-	const result = await AuthService.refreshToken(req.cookies.refreshToken);
+	const result = await AuthService.refreshToken(token);
 	const { accessToken, refreshToken: newRefreshToken } = result;
 
 	// res.cookie("accessToken", accessToken, {
