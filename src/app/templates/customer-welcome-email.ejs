@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to GridGuard</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #fbf6e3;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #2b2410;
+      }
+      table { border-collapse: collapse; }
+      a { text-decoration: none; }
+
+      .preheader {
+        display: none;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+      }
+
+      .wrapper {
+        width: 100%;
+        padding: 40px 16px;
+      }
+
+      .card {
+        max-width: 480px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(184, 138, 0, 0.10), 0 12px 32px rgba(184, 138, 0, 0.12);
+      }
+
+      .brandbar {
+        height: 6px;
+        background: linear-gradient(90deg, #ffc400 0%, #ffb000 100%);
+      }
+
+      .content {
+        padding: 36px 36px 32px;
+      }
+
+      .brandname {
+        font-size: 17px;
+        font-weight: 700;
+        color: #8a6500;
+        letter-spacing: -0.2px;
+      }
+
+      h1 {
+        font-size: 22px;
+        line-height: 1.35;
+        margin: 30px 0 12px;
+        color: #1a1400;
+        font-weight: 650;
+      }
+
+      p {
+        font-size: 15px;
+        line-height: 1.6;
+        margin: 0 0 16px;
+        color: #5c5330;
+      }
+
+      .divider {
+        border: none;
+        border-top: 1px solid #efe6c4;
+        margin: 28px 0 24px;
+      }
+
+      .footer {
+        padding: 24px 36px 32px;
+        text-align: center;
+      }
+
+      .footer p {
+        font-size: 12px;
+        color: #a39a74;
+        margin: 0;
+      }
+
+      @media (max-width: 520px) {
+        .content { padding: 28px 24px 24px; }
+        .footer { padding: 20px 24px 28px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="preheader">Your GridGuard account is ready. Start tracking load-shedding schedules and outages.</div>
+
+    <table role="presentation" width="100%" class="wrapper">
+      <tr>
+        <td>
+          <table role="presentation" class="card" width="100%">
+            <tr>
+              <td class="brandbar"></td>
+            </tr>
+            <tr>
+              <td class="content">
+                <table role="presentation">
+                  <tr>
+                    <td class="brandname">GridGuard</td>
+                  </tr>
+                </table>
+
+                <h1>Welcome, <%= name %></h1>
+                <p>Your account is verified and ready to use. GridGuard keeps you informed about power outages and load-shedding in your area, so you can plan your day with confidence.</p>
+
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;background-color:#fff8dc;border:1px solid #f5e1a0;border-radius:12px;margin:8px 0 24px;">
+                  <tr>
+                    <td style="padding:16px 22px;border-bottom:1px solid #f5e1a0;">
+                      <div style="font-size:14px;font-weight:600;color:#1a1400;padding-bottom:3px;">Load-shedding schedules</div>
+                      <div style="font-size:13px;line-height:1.55;color:#7a7048;">See when power cuts are planned for your area.</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:16px 22px;border-bottom:1px solid #f5e1a0;">
+                      <div style="font-size:14px;font-weight:600;color:#1a1400;padding-bottom:3px;">Report an outage</div>
+                      <div style="font-size:13px;line-height:1.55;color:#7a7048;">Tell us when your power goes out so it can be fixed faster.</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:16px 22px;border-bottom:1px solid #f5e1a0;">
+                      <div style="font-size:14px;font-weight:600;color:#1a1400;padding-bottom:3px;">Track technician assignments</div>
+                      <div style="font-size:13px;line-height:1.55;color:#7a7048;">Follow your report from submission to resolution.</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:16px 22px;">
+                      <div style="font-size:14px;font-weight:600;color:#1a1400;padding-bottom:3px;">Real-time updates</div>
+                      <div style="font-size:13px;line-height:1.55;color:#7a7048;">Get notified as soon as the status of an outage changes.</div>
+                    </td>
+                  </tr>
+                </table>
+
+                <% if (locals.loginUrl) { %>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="center" style="padding:4px 0 8px;">
+                      <a href="<%= loginUrl %>" style="display:inline-block;background-color:#ffc400;color:#1a1400;font-size:15px;font-weight:700;padding:13px 28px;border-radius:10px;">Open your dashboard</a>
+                    </td>
+                  </tr>
+                </table>
+                <% } %>
+
+                <hr class="divider" />
+
+                <p style="font-size: 13px; color: #7a7048; margin: 0;">If you didn't create this account, please contact our support team right away.</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="footer">
+                <p>&copy; GridGuard. All rights reserved.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
