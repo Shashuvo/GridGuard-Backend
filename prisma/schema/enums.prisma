@@ -1,0 +1,50 @@
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  CUSTOMER
+  TECHNICIAN
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
+enum AuthProvider {
+  GOOGLE
+  CREDENTIAL
+}
+
+enum TechnicianVerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OutageStatus {
+  REPORTED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum ScheduledOutageStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}

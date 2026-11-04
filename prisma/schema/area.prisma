@@ -1,0 +1,19 @@
+model Area {
+  id       String @id @default(uuid())
+  name     String
+  district String
+  city     String
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  unexpectedOutages UnexpectedOutage[]
+  scheduledOutages  ScheduledOutage[]
+  premiumUsers      PremiumUser[]
+
+  @@unique([name, district])
+  @@index([isDeleted], name: "idx_area_isDeleted")
+  @@map("areas")
+}
