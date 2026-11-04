@@ -28,4 +28,10 @@ router.get(
 	AuthController.getMe,
 );
 
+router.post(
+	"/refresh-token",
+	validateRequest(UserValidation.LoginZodSchema),
+	AuthController.refreshToken,
+);
+
 export const AuthRoutes = router;
