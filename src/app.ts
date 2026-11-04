@@ -9,6 +9,8 @@ import httpStatus from "http-status";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import config from "./app/config";
+import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
+import { notFound } from "./app/middleware/notFound";
 
 
 const app: Application = express();
@@ -63,5 +65,8 @@ app.get("/", async (req: Request, res: Response) => {
 	});
 });
 
+
+app.use(globalErrorHandler);
+app.use(notFound);
 
 export default app;
