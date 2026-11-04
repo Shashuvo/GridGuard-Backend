@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
-import { IRegisterCustomerPayload, IVerifyEmailPayload } from "./auth.interface";
+import { ILoginUserPayload, IRegisterCustomerPayload, IRequestUser, IVerifyEmailPayload } from "./auth.interface";
 import httpstatus from "http-status";
 import config from "../../config";
 import { randomInt } from "crypto";
@@ -196,8 +196,87 @@ const verifyCustomerEmail = async (payload: IVerifyEmailPayload) => {
 	};
 };
 
+const loginUser = async (payload: ILoginUserPayload) => {
+	const { password } = payload;
+	const email = payload.email.trim().toLowerCase();
+
+	const user = await prisma.user.findUnique({
+		where: { email },
+	});
+
+	if (!user) {
+		throw new AppError(httpstatus.NOT_FOUND, "User not found");
+	}
+
+	if (user.status === UserStatus.BLOCKED) {
+		throw new AppError(httpstatus.FORBIDDEN, "User is blocked");
+	}
+
+	if (user.isDeleted || user.status === UserStatus.DELETED) {
+		throw new AppError(httpstatus.NOT_FOUND, "User is deleted");
+	}
+
+	if (user.password === null && user.googleId !== null) {
+		throw new AppError(httpstatus.CONFLICT, "User already registered with Google. Please login with Google.");
+	}
+
+	const isPasswordMatched = await bcrypt.compare(
+		password,
+		user.password as string,
+	);
+
+	if (!isPasswordMatched) {
+		throw new AppError(httpstatus.UNAUTHORIZED, "Invalid credentials");
+	}
+
+	const jwtPayload = {
+		userId: user.id,
+		name: user.name,
+		email: user.email,
+		role: user.role,
+	};
+
+	const accessToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_access_secret,
+		config.jwt_access_expires_in as SignOptions,
+	);
+
+	const refreshToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_refresh_secret,
+		config.jwt_refresh_expires_in as SignOptions,
+	);
+
+	return {
+		accessToken,
+		refreshToken,
+	};
+};
+
+const getMe = async (user: IRequestUser) => {
+	const isUserExists = await prisma.user.findUnique({
+		where: {
+			id: user.userId,
+		},
+		include: {
+			customer: true,
+		},
+		omit: {
+			password: true,
+		},
+	});
+
+	if (!isUserExists) {
+		throw new AppError(httpstatus.NOT_FOUND, "User not found");
+	}
+
+	return isUserExists;
+};
 
 export const AuthService = {
 	registerCustomer,
-	verifyCustomerEmail
+	verifyCustomerEmail,
+	loginUser,
+	getMe
 };
