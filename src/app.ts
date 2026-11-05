@@ -14,6 +14,7 @@ import { notFound } from "./app/middleware/notFound";
 import { AuthRoutes } from "./app/module/auth/auth.route";
 import { UserRoutes } from "./app/module/user/user.route";
 import { TechnicianRoutes } from "./app/module/technician/technician.route";
+import { AreaRoutes } from "./app/module/area/area.route";
 
 
 const app: Application = express();
@@ -69,6 +70,7 @@ app.use(cookieParser());
 app.use("/api/v1/auth",authLimiter, AuthRoutes);
 app.use("/api/v1/user", UserRoutes);
 app.use("/api/v1/technician", TechnicianRoutes);
+app.use("/api/v1/area", AreaRoutes);
 
 // Basic route
 app.get("/", async (req: Request, res: Response) => {
