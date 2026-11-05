@@ -264,7 +264,7 @@ const approveTechnician = async (
     await redisClient.del(passwordKey); // clean up after use
   }
 
-  const tempatePath = path.join(
+  const templatePath = path.join(
     process.cwd(),
     `src/app/templates/${
       isApproved
@@ -279,7 +279,7 @@ const approveTechnician = async (
     password: tempPassword,
   };
 
-  const html = await ejs.renderFile(tempatePath, templateData);
+  const html = await ejs.renderFile(templatePath, templateData);
 
   await transporter.sendMail({
     from: config.email_sender,
