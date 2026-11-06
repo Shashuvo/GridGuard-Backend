@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Outage cancelled</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #fbf6e3;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #2b2410;
+      }
+      table { border-collapse: collapse; }
+      a { text-decoration: none; }
+
+      .preheader {
+        display: none;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+      }
+
+      .wrapper {
+        width: 100%;
+        padding: 40px 16px;
+      }
+
+      .card {
+        max-width: 480px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(184, 138, 0, 0.10), 0 12px 32px rgba(184, 138, 0, 0.12);
+      }
+
+      .brandbar {
+        height: 6px;
+        background: linear-gradient(90deg, #ffc400 0%, #ffb000 100%);
+      }
+
+      .content {
+        padding: 36px 36px 32px;
+      }
+
+      .brandname {
+        font-size: 17px;
+        font-weight: 700;
+        color: #8a6500;
+        letter-spacing: -0.2px;
+      }
+
+      h1 {
+        font-size: 22px;
+        line-height: 1.35;
+        margin: 20px 0 12px;
+        color: #1a1400;
+        font-weight: 650;
+        text-align: center;
+      }
+
+      p {
+        font-size: 15px;
+        line-height: 1.6;
+        margin: 0 0 16px;
+        color: #5c5330;
+      }
+
+      .detail-label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        color: #8a6500;
+        padding-bottom: 3px;
+      }
+
+      .detail-value {
+        font-size: 14px;
+        line-height: 1.5;
+        color: #1a1400;
+      }
+
+      .divider {
+        border: none;
+        border-top: 1px solid #efe6c4;
+        margin: 28px 0 24px;
+      }
+
+      .footer {
+        padding: 24px 36px 32px;
+        text-align: center;
+      }
+
+      .footer p {
+        font-size: 12px;
+        color: #a39a74;
+        margin: 0;
+      }
+
+      @media (max-width: 520px) {
+        .content { padding: 28px 24px 24px; }
+        .footer { padding: 20px 24px 28px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="preheader">The scheduled power outage in <%= area %> has been cancelled.</div>
+
+    <table role="presentation" width="100%" class="wrapper">
+      <tr>
+        <td>
+          <table role="presentation" class="card" width="100%">
+            <tr>
+              <td class="brandbar"></td>
+            </tr>
+            <tr>
+              <td class="content">
+                <table role="presentation">
+                  <tr>
+                    <td class="brandname">GridGuard</td>
+                  </tr>
+                </table>
+
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                  <tr>
+                    <td align="center">
+                      <table role="presentation" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td width="56" height="56" align="center" valign="middle" bgcolor="#ffc400" style="width:56px;height:56px;background-color:#ffc400;border-radius:28px;font-size:28px;line-height:56px;font-weight:700;color:#1a1400;">&#10003;</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+
+                <h1>Good news, <%= name %>!</h1>
+                <p style="text-align:center;">The scheduled power outage for your area has been <strong style="color:#1a1400;">cancelled</strong>.</p>
+
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;background-color:#fff8dc;border:1px solid #f5e1a0;border-radius:12px;margin:8px 0 24px;">
+                  <tr>
+                    <td style="padding:16px 22px;border-bottom:1px solid #f5e1a0;">
+                      <div class="detail-label">Area</div>
+                      <div class="detail-value"><%= area %>, <%= district %></div>
+                    </td>
+                  </tr>
+                  <% if (locals.reason && reason) { %>
+                  <tr>
+                    <td style="padding:16px 22px;border-bottom:1px solid #f5e1a0;">
+                      <div class="detail-label">Reason</div>
+                      <div class="detail-value"><%= reason %></div>
+                    </td>
+                  </tr>
+                  <% } %>
+                  <tr>
+                    <td style="padding:16px 22px;border-bottom:1px solid #f5e1a0;">
+                      <div class="detail-label">Was scheduled from</div>
+                      <div class="detail-value"><%= startTime %></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:16px 22px;">
+                      <div class="detail-label">Was scheduled to</div>
+                      <div class="detail-value"><%= endTime %></div>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="text-align:center;margin:0;">Power supply in your area will continue as normal. No action is needed.</p>
+
+                <hr class="divider" />
+
+                <p style="font-size: 13px; color: #7a7048; margin: 0;">Thank you for being a premium subscriber.</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="footer">
+                <p>&copy; GridGuard. All rights reserved.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
