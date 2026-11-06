@@ -231,7 +231,6 @@ const paymentCallback = async (query: Record<string, string>) => {
         pdfDocument.end();
         
         const pdfBuffer = await pdfReadyPromise;
-
         // send invoice email
         await transporter.sendMail({
           from: config.email_sender,
