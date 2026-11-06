@@ -18,6 +18,7 @@ import { AreaRoutes } from "./app/module/area/area.route";
 import { UnexpectedOutageRoutes } from "./app/module/unexpectedOutage/unexpectedOutage.route";
 import { ScheduledOutageRoutes } from "./app/module/scheduleOutage/scheduleOutage.route";
 import { PremiumPackageRoutes } from "./app/module/premiumPackage/premiumPackage.route";
+import { PaymentRoutes } from "./app/module/payment/payment.route";
 
 
 const app: Application = express();
@@ -77,6 +78,7 @@ app.use("/api/v1/area", AreaRoutes);
 app.use("/api/v1/unexpected-outage", UnexpectedOutageRoutes);
 app.use("/api/v1/scheduled-outage", ScheduledOutageRoutes);
 app.use("/api/v1/premium-package", PremiumPackageRoutes);
+app.use("/api/v1/payment", PaymentRoutes);
 
 // Basic route
 app.get("/", async (req: Request, res: Response) => {
