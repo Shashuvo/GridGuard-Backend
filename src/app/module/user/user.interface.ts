@@ -1,16 +1,16 @@
-import { UserStatus } from "../../../../generated/prisma/enums";
+import type { UserStatus } from "../../../../generated/prisma/enums";
 
 export interface IUpdateMyProfilePayload {
-    name?: string;
-    contactNumber?: string;
-    address?: string;
+	name?: string;
+	contactNumber?: string;
+	address?: string;
 }
 
 export interface IChangePasswordPayload {
-  oldPassword: string;
-  newPassword: string;
+	oldPassword: string;
+	newPassword: string;
 }
 
 export interface IUpdateUserStatusPayload {
-  status: UserStatus;
+	status: UserStatus;
 }

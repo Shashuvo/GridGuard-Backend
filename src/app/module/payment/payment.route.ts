@@ -8,30 +8,30 @@ import { Role } from "../../../../generated/prisma/enums";
 const router = Router();
 
 router.post(
-  "/buy-premium",
-  auth(Role.CUSTOMER),
-  validateRequest(BuyPremiumValidationZodSchema),
-  PaymentController.buyPremium,
+	"/buy-premium",
+	auth(Role.CUSTOMER),
+	validateRequest(BuyPremiumValidationZodSchema),
+	PaymentController.buyPremium,
 );
 
 router.get("/callback", PaymentController.paymentCallback);
 
 router.get(
-  "/my-payments",
-  auth(Role.CUSTOMER),
-  PaymentController.getMyPayments,
+	"/my-payments",
+	auth(Role.CUSTOMER),
+	PaymentController.getMyPayments,
 );
 
 router.get(
-  "/all",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  PaymentController.getAllPayments,
+	"/all",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	PaymentController.getAllPayments,
 );
 
 router.get(
-  "/:paymentId",
-  auth(Role.ADMIN, Role.SUPER_ADMIN, Role.CUSTOMER),
-  PaymentController.getPaymentDetails,
+	"/:paymentId",
+	auth(Role.ADMIN, Role.SUPER_ADMIN, Role.CUSTOMER),
+	PaymentController.getPaymentDetails,
 );
 
-export const PaymentRoutes = router; 
+export const PaymentRoutes = router;

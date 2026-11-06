@@ -2,8 +2,11 @@ import type { Request, Response } from "express";
 import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
-import { ApplyAsTechnicianValidationZodSchema, UpdateTechnicianProfileValidationZodSchema } from "./technician.validation";
-import { RequestUser } from "../../middleware/checkAuth";
+import {
+	ApplyAsTechnicianValidationZodSchema,
+	UpdateTechnicianProfileValidationZodSchema,
+} from "./technician.validation";
+import type { RequestUser } from "../../middleware/checkAuth";
 import { TechnicianServices } from "./technician.service";
 
 const applyTechnician = catchAsync(async (req: Request, res: Response) => {
@@ -19,10 +22,7 @@ const applyTechnician = catchAsync(async (req: Request, res: Response) => {
 
 	const payload = zodValidationResult.data;
 
-	const result = await TechnicianServices.applyAsTechnician(
-		payload,
-		resume
-	);
+	const result = await TechnicianServices.applyAsTechnician(payload, resume);
 
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
@@ -32,18 +32,20 @@ const applyTechnician = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
-const verifyTechnicianEmail = catchAsync(async (req: Request, res: Response) => {
-	const payload = req.body;
+const verifyTechnicianEmail = catchAsync(
+	async (req: Request, res: Response) => {
+		const payload = req.body;
 
-	const result = await TechnicianServices.verifyTechnicianEmail(payload);
+		const result = await TechnicianServices.verifyTechnicianEmail(payload);
 
-	sendResponse(res, {
-		statusCode: httpStatus.OK,
-		success: true,
-		message: "Technician Email verified successfully",
-		data: result,
-	});
-});
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Technician Email verified successfully",
+			data: result,
+		});
+	},
+);
 
 const approveTechnician = catchAsync(async (req: Request, res: Response) => {
 	const payload = req.body;
@@ -69,19 +71,23 @@ const getAllTechnician = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
-const updateTechnicianProfile = catchAsync(async (req: Request, res: Response) => {
-	const user = req.user!;
-    const payload = req.body;
+const updateTechnicianProfile = catchAsync(
+	async (req: Request, res: Response) => {
+		const user = req.user!;
+		const payload = req.body;
 
-	const result = await TechnicianServices.updateTechnicianProfile(payload, user);
-	sendResponse(res, {
-		statusCode: httpStatus.OK,
-		success: true,
-		message: "Technician Profile Updated Successfully",
-		data: result,
-	});
-});
-
+		const result = await TechnicianServices.updateTechnicianProfile(
+			payload,
+			user,
+		);
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Technician Profile Updated Successfully",
+			data: result,
+		});
+	},
+);
 
 const getAllTechnicianListPublic = catchAsync(
 	async (req: Request, res: Response) => {
@@ -102,7 +108,8 @@ const getSingleTechnicianPublicProfile = catchAsync(
 	async (req: Request, res: Response) => {
 		const technicianId = req.params.technicianId as string;
 
-		const result = await TechnicianServices.getSingleTechnicianPublicProfile(technicianId);
+		const result =
+			await TechnicianServices.getSingleTechnicianPublicProfile(technicianId);
 		sendResponse(res, {
 			statusCode: httpStatus.OK,
 			success: true,
@@ -112,42 +119,36 @@ const getSingleTechnicianPublicProfile = catchAsync(
 	},
 );
 
-
-
 const getMyAssignments = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user as RequestUser;
+	const user = req.user as RequestUser;
 
-  const result = await TechnicianServices.getMyAssignments(
-    req.query,
-    user,
-  );
+	const result = await TechnicianServices.getMyAssignments(req.query, user);
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "My assignments fetched successfully",
-    data: result,
-  });
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "My assignments fetched successfully",
+		data: result,
+	});
 });
 
 const updateStatus = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user as RequestUser;
-  const { outageId } = req.params;
+	const user = req.user as RequestUser;
+	const { outageId } = req.params;
 
-  const result = await TechnicianServices.updateStatus(
-    outageId as string,
-    req.body,
-    user,
-  );
+	const result = await TechnicianServices.updateStatus(
+		outageId as string,
+		req.body,
+		user,
+	);
 
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Outage status updated successfully",
-    data: result,
-  });
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Outage status updated successfully",
+		data: result,
+	});
 });
-
 
 export const TechnicianController = {
 	applyTechnician,

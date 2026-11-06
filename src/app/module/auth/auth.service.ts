@@ -1,7 +1,15 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
-import { IForgotPasswordPayload, IGoogleLoginPayload, ILoginUserPayload, IRegisterCustomerPayload, IRequestUser, IResetPasswordPayload, IVerifyEmailPayload } from "./auth.interface";
+import type {
+	IForgotPasswordPayload,
+	IGoogleLoginPayload,
+	ILoginUserPayload,
+	IRegisterCustomerPayload,
+	IRequestUser,
+	IResetPasswordPayload,
+	IVerifyEmailPayload,
+} from "./auth.interface";
 import httpstatus from "http-status";
 import config from "../../config";
 import { randomInt } from "crypto";
@@ -9,10 +17,14 @@ import { redisClient } from "../../lib/redis";
 import path from "path";
 import ejs from "ejs";
 import { transporter } from "../../lib/nodemailer";
-import { AuthProvider, Role, UserStatus } from "../../../../generated/prisma/enums";
+import {
+	AuthProvider,
+	Role,
+	UserStatus,
+} from "../../../../generated/prisma/enums";
 import { jwtUtils } from "../../utils/jwt";
-import { JwtPayload, SignOptions } from "jsonwebtoken";
-import { TokenPayload } from "google-auth-library";
+import type { JwtPayload, SignOptions } from "jsonwebtoken";
+import type { TokenPayload } from "google-auth-library";
 import { googleClient } from "../../lib/googleAuth";
 
 const registerCustomer = async (payload: IRegisterCustomerPayload) => {
@@ -24,7 +36,10 @@ const registerCustomer = async (payload: IRegisterCustomerPayload) => {
 	});
 
 	if (isUserExists) {
-		throw new AppError(httpstatus.CONFLICT, "User with this email already exists.");
+		throw new AppError(
+			httpstatus.CONFLICT,
+			"User with this email already exists.",
+		);
 	}
 
 	const hashedPassword = await bcrypt.hash(
@@ -129,7 +144,8 @@ const verifyCustomerEmail = async (payload: IVerifyEmailPayload) => {
 		throw new AppError(httpstatus.NOT_FOUND, "Customer Doesnt Exist");
 	}
 
-	const customerPayload: IRegisterCustomerPayload = JSON.parse(redisCustomerData);
+	const customerPayload: IRegisterCustomerPayload =
+		JSON.parse(redisCustomerData);
 
 	const createdUser = await prisma.user.create({
 		data: {
@@ -219,7 +235,10 @@ const loginUser = async (payload: ILoginUserPayload) => {
 	}
 
 	if (user.password === null && user.googleId !== null) {
-		throw new AppError(httpstatus.CONFLICT, "User already registered with Google. Please login with Google.");
+		throw new AppError(
+			httpstatus.CONFLICT,
+			"User already registered with Google. Please login with Google.",
+		);
 	}
 
 	const isPasswordMatched = await bcrypt.compare(
@@ -475,18 +494,30 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 		googleIdTokenPayload = ticket.getPayload();
 	} catch (error) {
 		console.error("Error occurred while verifying Google ID token:", error);
-		throw new AppError(httpstatus.BAD_REQUEST, "Invalid or Expired Google ID token");
+		throw new AppError(
+			httpstatus.BAD_REQUEST,
+			"Invalid or Expired Google ID token",
+		);
 	}
 
 	if (!googleIdTokenPayload) {
-		throw new AppError(httpstatus.BAD_REQUEST, "Invalid or Expired Google ID token");
+		throw new AppError(
+			httpstatus.BAD_REQUEST,
+			"Invalid or Expired Google ID token",
+		);
 	}
 
 	if (!googleIdTokenPayload.email) {
-		throw new AppError(httpstatus.BAD_REQUEST, "Email not found in Google ID token");
+		throw new AppError(
+			httpstatus.BAD_REQUEST,
+			"Email not found in Google ID token",
+		);
 	}
 	if (!googleIdTokenPayload.name) {
-		throw new AppError(httpstatus.BAD_REQUEST, "Name not found in Google ID token");
+		throw new AppError(
+			httpstatus.BAD_REQUEST,
+			"Name not found in Google ID token",
+		);
 	}
 
 	const ifCustomerExistsWithGoogleAuth = await prisma.user.findUnique({
@@ -510,7 +541,8 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 
 		if (ifCustomerExistsWithCredentials) {
 			if (ifCustomerExistsWithCredentials.emailVerified === false) {
-				throw new AppError(httpstatus.FORBIDDEN,
+				throw new AppError(
+					httpstatus.FORBIDDEN,
 					"Please verify your email before logging in with Google",
 				);
 			}
@@ -619,5 +651,5 @@ export const AuthService = {
 	refreshToken,
 	forgotPassword,
 	resetPassword,
-	googleLogin
+	googleLogin,
 };

@@ -1,11 +1,8 @@
-
 export interface IReportOutagePayload {
-  description: string;
-  areaId: string;
+	description: string;
+	areaId: string;
 }
 
-
-
 export interface IAssignTechnicianPayload {
-  technicianId: string;
+	technicianId: string;
 }

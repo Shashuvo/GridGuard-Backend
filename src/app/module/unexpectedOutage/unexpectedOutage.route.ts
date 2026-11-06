@@ -3,56 +3,56 @@ import { auth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
 import { UnexpectedOutageController } from "./unexpectedOutage.controller";
 import {
-    AssignTechnicianValidationZodSchema,
-  ReportOutageValidationZodSchema,
+	AssignTechnicianValidationZodSchema,
+	ReportOutageValidationZodSchema,
 } from "./unexpectedOutage.validation";
 import { Role } from "../../../../generated/prisma/enums";
 
 const router = Router();
 
 router.get(
-  "/public/area/:areaId",
-  UnexpectedOutageController.getPublicOutagesByArea,
+	"/public/area/:areaId",
+	UnexpectedOutageController.getPublicOutagesByArea,
 );
 
 router.post(
-  "/report",
-  auth(Role.CUSTOMER),
-  validateRequest(ReportOutageValidationZodSchema),
-  UnexpectedOutageController.reportOutage,
+	"/report",
+	auth(Role.CUSTOMER),
+	validateRequest(ReportOutageValidationZodSchema),
+	UnexpectedOutageController.reportOutage,
 );
 
 //customer can see his own reports
 router.get(
-  "/my-reports",
-  auth(Role.CUSTOMER),
-  UnexpectedOutageController.getMyReports,
+	"/my-reports",
+	auth(Role.CUSTOMER),
+	UnexpectedOutageController.getMyReports,
 );
 
 // admin
 router.get(
-  "/all",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  UnexpectedOutageController.getAllOutages,
+	"/all",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	UnexpectedOutageController.getAllOutages,
 );
 
 //admin, super admin and technician can see single outage details
 router.get(
-  "/:outageId",
-  auth(Role.ADMIN, Role.SUPER_ADMIN, Role.TECHNICIAN),
-  UnexpectedOutageController.getSingleOutage,
+	"/:outageId",
+	auth(Role.ADMIN, Role.SUPER_ADMIN, Role.TECHNICIAN),
+	UnexpectedOutageController.getSingleOutage,
 );
 
 router.patch(
-  "/:outageId/assign",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  validateRequest(AssignTechnicianValidationZodSchema),
-  UnexpectedOutageController.assignTechnician,
+	"/:outageId/assign",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	validateRequest(AssignTechnicianValidationZodSchema),
+	UnexpectedOutageController.assignTechnician,
 );
 
 router.delete(
-  "/:outageId",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  UnexpectedOutageController.deleteOutage,
+	"/:outageId",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	UnexpectedOutageController.deleteOutage,
 );
 export const UnexpectedOutageRoutes = router;

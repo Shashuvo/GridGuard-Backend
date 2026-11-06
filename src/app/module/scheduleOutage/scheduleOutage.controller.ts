@@ -1,132 +1,133 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { ScheduledOutageServices } from "./scheduleOutage.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
 
 const createScheduledOutage = catchAsync(
-  async (req: Request, res: Response) => {
-    const result = await ScheduledOutageServices.createScheduledOutage(
-      req.body,
-    );
+	async (req: Request, res: Response) => {
+		const result = await ScheduledOutageServices.createScheduledOutage(
+			req.body,
+		);
 
-    sendResponse(res, {
-      statusCode: httpStatus.CREATED,
-      success: true,
-      message: "Scheduled outage created successfully",
-      data: result,
-    });
-  },
+		sendResponse(res, {
+			statusCode: httpStatus.CREATED,
+			success: true,
+			message: "Scheduled outage created successfully",
+			data: result,
+		});
+	},
 );
 
 const getAllScheduledOutages = catchAsync(
-  async (req: Request, res: Response) => {
-    const result = await ScheduledOutageServices.getAllScheduledOutages(
-      req.query,
-    );
+	async (req: Request, res: Response) => {
+		const result = await ScheduledOutageServices.getAllScheduledOutages(
+			req.query,
+		);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Scheduled outages fetched successfully",
-      data: result.data,
-      meta: result.meta,
-    });
-  },
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Scheduled outages fetched successfully",
+			data: result.data,
+			meta: result.meta,
+		});
+	},
 );
 
 const getSingleScheduledOutage = catchAsync(
-  async (req: Request, res: Response) => {
-    const { outageId } = req.params;
+	async (req: Request, res: Response) => {
+		const { outageId } = req.params;
 
-    const result = await ScheduledOutageServices.getSingleScheduledOutage(
-      outageId as string,
-    );
+		const result = await ScheduledOutageServices.getSingleScheduledOutage(
+			outageId as string,
+		);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Scheduled outage fetched successfully",
-      data: result,
-    });
-  },
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Scheduled outage fetched successfully",
+			data: result,
+		});
+	},
 );
 
 const updateScheduledOutage = catchAsync(
-  async (req: Request, res: Response) => {
-    const { outageId } = req.params;
+	async (req: Request, res: Response) => {
+		const { outageId } = req.params;
 
-    const result = await ScheduledOutageServices.updateScheduledOutage(
-      outageId as string,
-      req.body,
-    );
+		const result = await ScheduledOutageServices.updateScheduledOutage(
+			outageId as string,
+			req.body,
+		);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Scheduled outage updated successfully",
-      data: result,
-    });
-  },
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Scheduled outage updated successfully",
+			data: result,
+		});
+	},
 );
 
 const deleteScheduledOutage = catchAsync(
-  async (req: Request, res: Response) => {
-    const { outageId } = req.params;
+	async (req: Request, res: Response) => {
+		const { outageId } = req.params;
 
-    const result =
-      await ScheduledOutageServices.deleteScheduledOutage(outageId as string);
+		const result = await ScheduledOutageServices.deleteScheduledOutage(
+			outageId as string,
+		);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Scheduled outage deleted successfully",
-      data: result,
-    });
-  },
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Scheduled outage deleted successfully",
+			data: result,
+		});
+	},
 );
 
 const getPublicScheduledOutages = catchAsync(
-  async (req: Request, res: Response) => {
-    const result = await ScheduledOutageServices.getPublicScheduledOutages(
-      req.query,
-    );
+	async (req: Request, res: Response) => {
+		const result = await ScheduledOutageServices.getPublicScheduledOutages(
+			req.query,
+		);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Scheduled outages fetched successfully",
-      data: result.data,
-      meta: result.meta,
-    });
-  },
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Scheduled outages fetched successfully",
+			data: result.data,
+			meta: result.meta,
+		});
+	},
 );
 
 const getPublicOutagesByArea = catchAsync(
-  async (req: Request, res: Response) => {
-    const { areaId } = req.params;
+	async (req: Request, res: Response) => {
+		const { areaId } = req.params;
 
-    const result = await ScheduledOutageServices.getPublicOutagesByArea(
-      areaId as string,
-      req.query,
-    );
+		const result = await ScheduledOutageServices.getPublicOutagesByArea(
+			areaId as string,
+			req.query,
+		);
 
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Area scheduled outages fetched successfully",
-      data: result.data,
-      meta: result.meta,
-    });
-  },
+		sendResponse(res, {
+			statusCode: httpStatus.OK,
+			success: true,
+			message: "Area scheduled outages fetched successfully",
+			data: result.data,
+			meta: result.meta,
+		});
+	},
 );
 
 export const ScheduledOutageController = {
-  createScheduledOutage,
-  getAllScheduledOutages,
-  getSingleScheduledOutage,
-  updateScheduledOutage,
-  deleteScheduledOutage,
-  getPublicScheduledOutages,
-  getPublicOutagesByArea,
+	createScheduledOutage,
+	getAllScheduledOutages,
+	getSingleScheduledOutage,
+	updateScheduledOutage,
+	deleteScheduledOutage,
+	getPublicScheduledOutages,
+	getPublicOutagesByArea,
 };

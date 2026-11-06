@@ -1,4 +1,4 @@
 export interface IBuyPremiumPayload {
-    packageId: string;
-    areaId: string;
-  } 
+	packageId: string;
+	areaId: string;
+}

@@ -4,7 +4,7 @@ import config from "../config";
 import { prisma } from "../lib/prisma";
 import { catchAsync } from "../utils/catchAsync";
 import { jwtUtils } from "../utils/jwt";
-import { Role } from "../../../generated/prisma/enums";
+import type { Role } from "../../../generated/prisma/enums";
 
 export interface RequestUser {
 	email: string;

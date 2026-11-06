@@ -3,8 +3,8 @@ import { auth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
 import { AreaController } from "./area.controller";
 import {
-  CreateAreaValidationZodSchema,
-  UpdateAreaValidationZodSchema,
+	CreateAreaValidationZodSchema,
+	UpdateAreaValidationZodSchema,
 } from "./area.validation";
 import { Role } from "../../../../generated/prisma/enums";
 
@@ -13,36 +13,35 @@ const router = Router();
 router.get("/public/all", AreaController.getPublicAreas);
 
 router.post(
-  "/create",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  validateRequest(CreateAreaValidationZodSchema),
-  AreaController.createArea,
+	"/create",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	validateRequest(CreateAreaValidationZodSchema),
+	AreaController.createArea,
 );
 
 router.get(
-  "/all",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  AreaController.getAllAreas,
+	"/all",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	AreaController.getAllAreas,
 );
 
 router.get(
-  "/:areaId",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  AreaController.getSingleArea,
+	"/:areaId",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	AreaController.getSingleArea,
 );
 
 router.patch(
-  "/:areaId",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  validateRequest(UpdateAreaValidationZodSchema),
-  AreaController.updateArea,
+	"/:areaId",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	validateRequest(UpdateAreaValidationZodSchema),
+	AreaController.updateArea,
 );
 
 router.delete(
-  "/:areaId",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  AreaController.deleteArea,
+	"/:areaId",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	AreaController.deleteArea,
 );
-
 
 export const AreaRoutes = router;

@@ -4,7 +4,11 @@ import { startCronJobs } from "./app/lib/cron";
 import { transporter } from "./app/lib/nodemailer";
 import { prisma } from "./app/lib/prisma";
 import { redisClient } from "./app/lib/redis";
-import { seedSuperAdmin, seedTesterAdmin, seedTesterTechnician } from "./app/utils/seed";
+import {
+	seedSuperAdmin,
+	seedTesterAdmin,
+	seedTesterTechnician,
+} from "./app/utils/seed";
 
 const PORT = config.port;
 
@@ -23,7 +27,7 @@ const main = async () => {
 		await seedTesterAdmin();
 		await seedTesterTechnician();
 
-		startCronJobs()
+		startCronJobs();
 
 		app.listen(PORT, () => {
 			console.log(`Server is running on port ${PORT}`);

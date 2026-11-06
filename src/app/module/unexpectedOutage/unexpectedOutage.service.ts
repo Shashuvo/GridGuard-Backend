@@ -3,292 +3,292 @@ import ejs from "ejs";
 import httpStatus from "http-status";
 import { transporter } from "../../lib/nodemailer";
 import { prisma } from "../../lib/prisma";
-import { IQuery } from "../../interfaces";
+import type { IQuery } from "../../interfaces";
 import { AppError } from "../../utils/AppError";
-import { RequestUser } from "../../middleware/checkAuth";
+import type { RequestUser } from "../../middleware/checkAuth";
 import config from "../../config";
-import {
-  IAssignTechnicianPayload,
-  IReportOutagePayload,
+import type {
+	IAssignTechnicianPayload,
+	IReportOutagePayload,
 } from "./unexpectedOutage.interface";
-import { UnexpectedOutageWhereInput } from "../../../../generated/prisma/models";
+import type { UnexpectedOutageWhereInput } from "../../../../generated/prisma/models";
 import { OutageStatus, Role } from "../../../../generated/prisma/enums";
 
 const reportOutage = async (
-  payload: IReportOutagePayload,
-  user: RequestUser,
+	payload: IReportOutagePayload,
+	user: RequestUser,
 ) => {
-  const existingArea = await prisma.area.findUnique({
-    where: { id: payload.areaId, isDeleted: false },
-  });
+	const existingArea = await prisma.area.findUnique({
+		where: { id: payload.areaId, isDeleted: false },
+	});
 
-  if (!existingArea) {
-    throw new AppError(httpStatus.NOT_FOUND, "Area Not Found");
-  }
+	if (!existingArea) {
+		throw new AppError(httpStatus.NOT_FOUND, "Area Not Found");
+	}
 
-  const outage = await prisma.unexpectedOutage.create({
-    data: {
-      description: payload.description,
-      areaId: payload.areaId,
-      reporterId: user.userId,
-    },
-    include: {
-      area: true,
-      reporter: {
-        omit: { password: true },
-      },
-    },
-  });
+	const outage = await prisma.unexpectedOutage.create({
+		data: {
+			description: payload.description,
+			areaId: payload.areaId,
+			reporterId: user.userId,
+		},
+		include: {
+			area: true,
+			reporter: {
+				omit: { password: true },
+			},
+		},
+	});
 
-  return outage;
+	return outage;
 };
 const getMyReports = async (query: IQuery, user: RequestUser) => {
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
 
-  const andConditions: UnexpectedOutageWhereInput[] = [
-    { isDeleted: false },
-    { reporterId: user.userId },
-  ];
+	const andConditions: UnexpectedOutageWhereInput[] = [
+		{ isDeleted: false },
+		{ reporterId: user.userId },
+	];
 
-  if (query.status) {
-    andConditions.push({ status: query.status as OutageStatus });
-  }
+	if (query.status) {
+		andConditions.push({ status: query.status as OutageStatus });
+	}
 
-  const outages = await prisma.unexpectedOutage.findMany({
-    where: { AND: andConditions },
-    take: limit,
-    skip,
-    orderBy: { createdAt: "desc" },
-    include: {
-      area: true,
-      technician: true,
-    },
-  });
+	const outages = await prisma.unexpectedOutage.findMany({
+		where: { AND: andConditions },
+		take: limit,
+		skip,
+		orderBy: { createdAt: "desc" },
+		include: {
+			area: true,
+			technician: true,
+		},
+	});
 
-  const total = await prisma.unexpectedOutage.count({
-    where: { AND: andConditions },
-  });
+	const total = await prisma.unexpectedOutage.count({
+		where: { AND: andConditions },
+	});
 
-  return {
-    data: outages,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+	return {
+		data: outages,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
 };
 
 const getAllOutages = async (query: IQuery) => {
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ?? "createdAt";
-  const sortOrder = query.sortOrder ?? "desc";
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
+	const sortBy = query.sortBy ?? "createdAt";
+	const sortOrder = query.sortOrder ?? "desc";
 
-  const andConditions: UnexpectedOutageWhereInput[] = [{ isDeleted: false }];
+	const andConditions: UnexpectedOutageWhereInput[] = [{ isDeleted: false }];
 
-  if (query.status) {
-    andConditions.push({ status: query.status as OutageStatus });
-  }
+	if (query.status) {
+		andConditions.push({ status: query.status as OutageStatus });
+	}
 
-  if (query.areaId) {
-    andConditions.push({ areaId: query.areaId });
-  }
+	if (query.areaId) {
+		andConditions.push({ areaId: query.areaId });
+	}
 
-  if (query.searchTerm) {
-    andConditions.push({
-      description: { contains: query.searchTerm, mode: "insensitive" },
-    });
-  }
+	if (query.searchTerm) {
+		andConditions.push({
+			description: { contains: query.searchTerm, mode: "insensitive" },
+		});
+	}
 
-  const outages = await prisma.unexpectedOutage.findMany({
-    where: { AND: andConditions },
-    take: limit,
-    skip,
-    orderBy: { [sortBy]: sortOrder },
-    include: {
-      area: true,
-      reporter: { omit: { password: true } },
-      technician: true,
-    },
-  });
+	const outages = await prisma.unexpectedOutage.findMany({
+		where: { AND: andConditions },
+		take: limit,
+		skip,
+		orderBy: { [sortBy]: sortOrder },
+		include: {
+			area: true,
+			reporter: { omit: { password: true } },
+			technician: true,
+		},
+	});
 
-  const total = await prisma.unexpectedOutage.count({
-    where: { AND: andConditions },
-  });
+	const total = await prisma.unexpectedOutage.count({
+		where: { AND: andConditions },
+	});
 
-  return {
-    data: outages,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+	return {
+		data: outages,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
 };
 
 const getSingleOutage = async (outageId: string, user: RequestUser) => {
-  const outage = await prisma.unexpectedOutage.findUnique({
-    where: { id: outageId, isDeleted: false },
-    include: {
-      area: true,
-      reporter: { omit: { password: true } },
-      technician: true,
-    },
-  });
+	const outage = await prisma.unexpectedOutage.findUnique({
+		where: { id: outageId, isDeleted: false },
+		include: {
+			area: true,
+			reporter: { omit: { password: true } },
+			technician: true,
+		},
+	});
 
-  if (!outage) {
-    throw new AppError(httpStatus.NOT_FOUND, "Outage Not Found");
-  }
+	if (!outage) {
+		throw new AppError(httpStatus.NOT_FOUND, "Outage Not Found");
+	}
 
-  // if technician, make sure it's their assignment
-  if (user.role === Role.TECHNICIAN) {
-    const technician = await prisma.technician.findUnique({
-      where: { userId: user.userId },
-    });
+	// if technician, make sure it's their assignment
+	if (user.role === Role.TECHNICIAN) {
+		const technician = await prisma.technician.findUnique({
+			where: { userId: user.userId },
+		});
 
-    if (!technician || outage.technicianId !== technician.id) {
-      throw new AppError(
-        httpStatus.FORBIDDEN,
-        "You Are Not Assigned To This Outage",
-      );
-    }
-  }
+		if (!technician || outage.technicianId !== technician.id) {
+			throw new AppError(
+				httpStatus.FORBIDDEN,
+				"You Are Not Assigned To This Outage",
+			);
+		}
+	}
 
-  return outage;
+	return outage;
 };
 
 const assignTechnician = async (
-  outageId: string,
-  payload: IAssignTechnicianPayload,
+	outageId: string,
+	payload: IAssignTechnicianPayload,
 ) => {
-  const existingOutage = await prisma.unexpectedOutage.findUnique({
-    where: { id: outageId, isDeleted: false },
-    include: { area: true },
-  });
+	const existingOutage = await prisma.unexpectedOutage.findUnique({
+		where: { id: outageId, isDeleted: false },
+		include: { area: true },
+	});
 
-  if (!existingOutage) {
-    throw new AppError(httpStatus.NOT_FOUND, "Outage Not Found");
-  }
+	if (!existingOutage) {
+		throw new AppError(httpStatus.NOT_FOUND, "Outage Not Found");
+	}
 
-  if (existingOutage.status === OutageStatus.RESOLVED) {
-    throw new AppError(
-      httpStatus.CONFLICT,
-      "Cannot Assign Technician To A Resolved Outage",
-    );
-  }
+	if (existingOutage.status === OutageStatus.RESOLVED) {
+		throw new AppError(
+			httpStatus.CONFLICT,
+			"Cannot Assign Technician To A Resolved Outage",
+		);
+	}
 
-  const existingTechnician = await prisma.technician.findUnique({
-    where: { id: payload.technicianId, isDeleted: false },
-    include: { user: true },
-  });
+	const existingTechnician = await prisma.technician.findUnique({
+		where: { id: payload.technicianId, isDeleted: false },
+		include: { user: true },
+	});
 
-  if (!existingTechnician) {
-    throw new AppError(httpStatus.NOT_FOUND, "Technician Not Found");
-  }
+	if (!existingTechnician) {
+		throw new AppError(httpStatus.NOT_FOUND, "Technician Not Found");
+	}
 
-  const updatedOutage = await prisma.unexpectedOutage.update({
-    where: { id: outageId },
-    data: {
-      technicianId: payload.technicianId,
-      status: OutageStatus.ASSIGNED,
-    },
-    include: {
-      area: true,
-      technician: { include: { user: true } },
-      reporter: { omit: { password: true } },
-    },
-  });
+	const updatedOutage = await prisma.unexpectedOutage.update({
+		where: { id: outageId },
+		data: {
+			technicianId: payload.technicianId,
+			status: OutageStatus.ASSIGNED,
+		},
+		include: {
+			area: true,
+			technician: { include: { user: true } },
+			reporter: { omit: { password: true } },
+		},
+	});
 
-  // send email to technician
-  const templatePath = path.join(
-    process.cwd(),
-    "src/app/templates/technician-assigned.ejs",
-  );
+	// send email to technician
+	const templatePath = path.join(
+		process.cwd(),
+		"src/app/templates/technician-assigned.ejs",
+	);
 
-  const templateData = {
-    name: existingTechnician.user.name,
-    area: existingOutage.area.name,
-    district: existingOutage.area.district,
-    type: "Unexpected Outage",
-    reason: existingOutage.description,
-  };
+	const templateData = {
+		name: existingTechnician.user.name,
+		area: existingOutage.area.name,
+		district: existingOutage.area.district,
+		type: "Unexpected Outage",
+		reason: existingOutage.description,
+	};
 
-  const html = await ejs.renderFile(templatePath, templateData);
+	const html = await ejs.renderFile(templatePath, templateData);
 
-  await transporter.sendMail({
-    from: config.email_sender,
-    to: existingTechnician.user.email,
-    subject: `New Assignment - ${existingOutage.area.name}`,
-    html,
-  });
+	await transporter.sendMail({
+		from: config.email_sender,
+		to: existingTechnician.user.email,
+		subject: `New Assignment - ${existingOutage.area.name}`,
+		html,
+	});
 
-  return updatedOutage;
+	return updatedOutage;
 };
 
 const deleteOutage = async (outageId: string) => {
-  const existingOutage = await prisma.unexpectedOutage.findUnique({
-    where: { id: outageId, isDeleted: false },
-  });
+	const existingOutage = await prisma.unexpectedOutage.findUnique({
+		where: { id: outageId, isDeleted: false },
+	});
 
-  if (!existingOutage) {
-    throw new AppError(httpStatus.NOT_FOUND, "Outage Not Found");
-  }
+	if (!existingOutage) {
+		throw new AppError(httpStatus.NOT_FOUND, "Outage Not Found");
+	}
 
-  const deletedOutage = await prisma.unexpectedOutage.update({
-    where: { id: outageId },
-    data: { isDeleted: true, deletedAt: new Date() },
-  });
+	const deletedOutage = await prisma.unexpectedOutage.update({
+		where: { id: outageId },
+		data: { isDeleted: true, deletedAt: new Date() },
+	});
 
-  return deletedOutage;
+	return deletedOutage;
 };
 
 const getPublicOutagesByArea = async (areaId: string, query: IQuery) => {
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
 
-  const existingArea = await prisma.area.findUnique({
-    where: { id: areaId, isDeleted: false },
-  });
+	const existingArea = await prisma.area.findUnique({
+		where: { id: areaId, isDeleted: false },
+	});
 
-  if (!existingArea) {
-    throw new AppError(httpStatus.NOT_FOUND, "Area Not Found");
-  }
+	if (!existingArea) {
+		throw new AppError(httpStatus.NOT_FOUND, "Area Not Found");
+	}
 
-  const outages = await prisma.unexpectedOutage.findMany({
-    where: {
-      areaId,
-      isDeleted: false,
-      status: { not: OutageStatus.RESOLVED },
-    },
-    take: limit,
-    skip,
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      description: true,
-      status: true,
-      createdAt: true,
-      area: true,
-    },
-  });
+	const outages = await prisma.unexpectedOutage.findMany({
+		where: {
+			areaId,
+			isDeleted: false,
+			status: { not: OutageStatus.RESOLVED },
+		},
+		take: limit,
+		skip,
+		orderBy: { createdAt: "desc" },
+		select: {
+			id: true,
+			description: true,
+			status: true,
+			createdAt: true,
+			area: true,
+		},
+	});
 
-  const total = await prisma.unexpectedOutage.count({
-    where: {
-      areaId,
-      isDeleted: false,
-      status: { not: OutageStatus.RESOLVED },
-    },
-  });
+	const total = await prisma.unexpectedOutage.count({
+		where: {
+			areaId,
+			isDeleted: false,
+			status: { not: OutageStatus.RESOLVED },
+		},
+	});
 
-  return {
-    data: outages,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+	return {
+		data: outages,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
 };
 
 export const UnexpectedOutageServices = {
-  reportOutage,
-  getMyReports,
-  getAllOutages,
-  getSingleOutage,
-  assignTechnician,
-  deleteOutage,
-  getPublicOutagesByArea,
+	reportOutage,
+	getMyReports,
+	getAllOutages,
+	getSingleOutage,
+	assignTechnician,
+	deleteOutage,
+	getPublicOutagesByArea,
 };

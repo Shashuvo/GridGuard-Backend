@@ -3,10 +3,9 @@ import httpStatus from "http-status";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { AuthService } from "./auth.service";
-import { IRequestUser } from "./auth.interface";
+import type { IRequestUser } from "./auth.interface";
 
 const registerCustomer = catchAsync(async (req: Request, res: Response) => {
-	
 	const payload = req.body;
 	await AuthService.registerCustomer(payload);
 
@@ -97,8 +96,9 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 
 const refreshToken = catchAsync(async (req: Request, res: Response) => {
 	const authHeader = req.headers.authorization;
-	const bearerToken =
-		authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : undefined;
+	const bearerToken = authHeader?.startsWith("Bearer ")
+		? authHeader.split(" ")[1]
+		: undefined;
 	const token = bearerToken ?? req.cookies?.refreshToken;
 
 	if (!token) {
@@ -196,5 +196,5 @@ export const AuthController = {
 	refreshToken,
 	forgotPassword,
 	resetPassword,
-	googleLogin
+	googleLogin,
 };

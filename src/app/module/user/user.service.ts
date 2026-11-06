@@ -1,114 +1,120 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../../lib/prisma";
-import { RequestUser } from "../../middleware/checkAuth";
+import type { RequestUser } from "../../middleware/checkAuth";
 import { AppError } from "../../utils/AppError";
-import { IChangePasswordPayload, IUpdateMyProfilePayload, IUpdateUserStatusPayload } from "./user.interface";
+import type {
+	IChangePasswordPayload,
+	IUpdateMyProfilePayload,
+	IUpdateUserStatusPayload,
+} from "./user.interface";
 import httpStatus from "http-status";
 import config from "../../config";
 import { cloudinary } from "../../lib/cloudinary";
-import { UploadApiResponse } from "cloudinary";
-import { IQuery } from "../../interfaces";
-import { UserWhereInput } from "../../../../generated/prisma/models";
-import { SubscriptionStatus, UserStatus } from "../../../../generated/prisma/enums";
+import type { UploadApiResponse } from "cloudinary";
+import type { IQuery } from "../../interfaces";
+import type { UserWhereInput } from "../../../../generated/prisma/models";
+import type {
+	SubscriptionStatus,
+	UserStatus,
+} from "../../../../generated/prisma/enums";
 
 const updateMyProfile = async (
-    payload: IUpdateMyProfilePayload,
-    user: RequestUser,
-  ) => {
-    const existingUser = await prisma.user.findUnique({
-      where: { id: user.userId, isDeleted: false },
-    });
-  
-    if (!existingUser) {
-      throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
-    }
-  
-    const updatedUser = await prisma.user.update({
-      where: { id: user.userId },
-      data: { name: payload.name },
-      omit: { password: true },
-    });
-  
-    // update customer or technician profile if name changed
-    if (payload.name) {
-      if (existingUser.role === "CUSTOMER") {
-        await prisma.customer.update({
-          where: { userId: user.userId },
-          data: {
-            contactNumber: payload.contactNumber,
-            address: payload.address,
-          },
-        });
-      }
-  
-      if (existingUser.role === "TECHNICIAN") {
-        await prisma.technician.update({
-          where: { userId: user.userId },
-          data: {
-            contactNumber: payload.contactNumber,
-            address: payload.address,
-          },
-        });
-      }
-    }
-  
-    return updatedUser;
+	payload: IUpdateMyProfilePayload,
+	user: RequestUser,
+) => {
+	const existingUser = await prisma.user.findUnique({
+		where: { id: user.userId, isDeleted: false },
+	});
+
+	if (!existingUser) {
+		throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+	}
+
+	const updatedUser = await prisma.user.update({
+		where: { id: user.userId },
+		data: { name: payload.name },
+		omit: { password: true },
+	});
+
+	// update customer or technician profile if name changed
+	if (payload.name) {
+		if (existingUser.role === "CUSTOMER") {
+			await prisma.customer.update({
+				where: { userId: user.userId },
+				data: {
+					contactNumber: payload.contactNumber,
+					address: payload.address,
+				},
+			});
+		}
+
+		if (existingUser.role === "TECHNICIAN") {
+			await prisma.technician.update({
+				where: { userId: user.userId },
+				data: {
+					contactNumber: payload.contactNumber,
+					address: payload.address,
+				},
+			});
+		}
+	}
+
+	return updatedUser;
 };
 
 const changePassword = async (
-  payload: IChangePasswordPayload,
-  user: RequestUser,
+	payload: IChangePasswordPayload,
+	user: RequestUser,
 ) => {
-  const existingUser = await prisma.user.findUnique({
-    where: { id: user.userId, isDeleted: false },
-  });
+	const existingUser = await prisma.user.findUnique({
+		where: { id: user.userId, isDeleted: false },
+	});
 
-  if (!existingUser) {
-    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
-  }
+	if (!existingUser) {
+		throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+	}
 
-  if (!existingUser.password) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "Password Cannot Be Changed For Social Login Users",
-    );
-  }
+	if (!existingUser.password) {
+		throw new AppError(
+			httpStatus.BAD_REQUEST,
+			"Password Cannot Be Changed For Social Login Users",
+		);
+	}
 
-  const isPasswordMatch = await bcrypt.compare(
-    payload.oldPassword,
-    existingUser.password,
-  );
+	const isPasswordMatch = await bcrypt.compare(
+		payload.oldPassword,
+		existingUser.password,
+	);
 
-  if (!isPasswordMatch) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "Old Password Is Incorrect");
-  }
+	if (!isPasswordMatch) {
+		throw new AppError(httpStatus.UNAUTHORIZED, "Old Password Is Incorrect");
+	}
 
-  if (payload.oldPassword === payload.newPassword) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      "New Password Cannot Be Same As Old Password",
-    );
-  }
+	if (payload.oldPassword === payload.newPassword) {
+		throw new AppError(
+			httpStatus.BAD_REQUEST,
+			"New Password Cannot Be Same As Old Password",
+		);
+	}
 
-  const hashedPassword = await bcrypt.hash(
-    payload.newPassword,
-    Number(config.bcrypt_salt_rounds),
-  );
+	const hashedPassword = await bcrypt.hash(
+		payload.newPassword,
+		Number(config.bcrypt_salt_rounds),
+	);
 
-  const updatedUser = await prisma.user.update({
-    where: { id: user.userId },
-    data: {
-      password: hashedPassword,
-      needPasswordChange: false,
-    },
-    omit: { password: true },
-  });
+	const updatedUser = await prisma.user.update({
+		where: { id: user.userId },
+		data: {
+			password: hashedPassword,
+			needPasswordChange: false,
+		},
+		omit: { password: true },
+	});
 
-  return updatedUser;
+	return updatedUser;
 };
 
 const uploadProfileImage = async (buffer: Buffer, userId: string) => {
-	
 	const currentUser = await prisma.user.findUnique({
 		where: {
 			id: userId,
@@ -166,262 +172,253 @@ const uploadProfileImage = async (buffer: Buffer, userId: string) => {
 };
 
 const getAllUsers = async (query: IQuery) => {
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ?? "createdAt";
-  const sortOrder = query.sortOrder ?? "desc";
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
+	const sortBy = query.sortBy ?? "createdAt";
+	const sortOrder = query.sortOrder ?? "desc";
 
-  const andConditions: UserWhereInput[] = [{ isDeleted: false }];
+	const andConditions: UserWhereInput[] = [{ isDeleted: false }];
 
-  if (query.searchTerm) {
-    andConditions.push({
-      OR: [
-        { name: { contains: query.searchTerm, mode: "insensitive" } },
-        { email: { contains: query.searchTerm, mode: "insensitive" } },
-      ],
-    });
-  }
+	if (query.searchTerm) {
+		andConditions.push({
+			OR: [
+				{ name: { contains: query.searchTerm, mode: "insensitive" } },
+				{ email: { contains: query.searchTerm, mode: "insensitive" } },
+			],
+		});
+	}
 
-  if (query.role) {
-    andConditions.push({ role: query.role });
-  }
+	if (query.role) {
+		andConditions.push({ role: query.role });
+	}
 
-  if (query.status) {
-    andConditions.push({ status: query.status as UserStatus });
-  }
+	if (query.status) {
+		andConditions.push({ status: query.status as UserStatus });
+	}
 
-  const users = await prisma.user.findMany({
-    where: { AND: andConditions },
-    take: limit,
-    skip,
-    orderBy: { [sortBy]: sortOrder },
-    omit: { password: true },
-  });
+	const users = await prisma.user.findMany({
+		where: { AND: andConditions },
+		take: limit,
+		skip,
+		orderBy: { [sortBy]: sortOrder },
+		omit: { password: true },
+	});
 
-  const total = await prisma.user.count({
-    where: { AND: andConditions },
-  });
+	const total = await prisma.user.count({
+		where: { AND: andConditions },
+	});
 
-  return {
-    data: users,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+	return {
+		data: users,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
 };
 
 const getSingleUser = async (userId: string) => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId, isDeleted: false },
-    omit: { password: true },
-    include: {
-      customer: true,
-      technician: true,
-    },
-  });
+	const user = await prisma.user.findUnique({
+		where: { id: userId, isDeleted: false },
+		omit: { password: true },
+		include: {
+			customer: true,
+			technician: true,
+		},
+	});
 
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
-  }
+	if (!user) {
+		throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+	}
 
-  return user;
+	return user;
 };
 
 const getAllPremiumUsers = async (query: IQuery) => {
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ?? "createdAt";
-  const sortOrder = query.sortOrder ?? "desc";
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
+	const sortBy = query.sortBy ?? "createdAt";
+	const sortOrder = query.sortOrder ?? "desc";
 
-  const andConditions = [];
+	const andConditions = [];
 
-  andConditions.push({ isDeleted: false });
+	andConditions.push({ isDeleted: false });
 
-  if (query.status) {
-    andConditions.push({ status: query.status as SubscriptionStatus });
-  }
+	if (query.status) {
+		andConditions.push({ status: query.status as SubscriptionStatus });
+	}
 
-  if (query.areaId) {
-    andConditions.push({ areaId: query.areaId });
-  }
+	if (query.areaId) {
+		andConditions.push({ areaId: query.areaId });
+	}
 
-  if (query.packageId) {
-    andConditions.push({ packageId: query.packageId });
-  }
+	if (query.packageId) {
+		andConditions.push({ packageId: query.packageId });
+	}
 
-  const premiumUsers = await prisma.premiumUser.findMany({
-    where: { AND: andConditions },
-    take: limit,
-    skip,
-    orderBy: { [sortBy]: sortOrder },
-    include: {
-      user: { omit: { password: true } },
-      package: true,
-      area: true,
-    },
-  });
+	const premiumUsers = await prisma.premiumUser.findMany({
+		where: { AND: andConditions },
+		take: limit,
+		skip,
+		orderBy: { [sortBy]: sortOrder },
+		include: {
+			user: { omit: { password: true } },
+			package: true,
+			area: true,
+		},
+	});
 
-  const total = await prisma.premiumUser.count({
-    where: { AND: andConditions },
-  });
+	const total = await prisma.premiumUser.count({
+		where: { AND: andConditions },
+	});
 
-  return {
-    data: premiumUsers,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+	return {
+		data: premiumUsers,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
 };
 
 const getSinglePremiumUser = async (premiumUserId: string) => {
-  const premiumUser = await prisma.premiumUser.findUnique({
-    where: { id: premiumUserId, isDeleted: false },
-    include: {
-      user: { omit: { password: true } },
-      package: true,
-      area: true,
-      payments: true,
-    },
-  });
+	const premiumUser = await prisma.premiumUser.findUnique({
+		where: { id: premiumUserId, isDeleted: false },
+		include: {
+			user: { omit: { password: true } },
+			package: true,
+			area: true,
+			payments: true,
+		},
+	});
 
-  if (!premiumUser) {
-    throw new AppError(httpStatus.NOT_FOUND, "Premium User Not Found");
-  }
+	if (!premiumUser) {
+		throw new AppError(httpStatus.NOT_FOUND, "Premium User Not Found");
+	}
 
-  return premiumUser;
+	return premiumUser;
 };
 
 const getMyPremiumSubscriptions = async (query: IQuery, user: RequestUser) => {
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
 
-  const andConditions = [];
+	const andConditions = [];
 
-  andConditions.push({ isDeleted: false });
-  andConditions.push({ userId: user.userId });
+	andConditions.push({ isDeleted: false });
+	andConditions.push({ userId: user.userId });
 
-  if (query.status) {
-    andConditions.push({ status: query.status as SubscriptionStatus });
-  }
+	if (query.status) {
+		andConditions.push({ status: query.status as SubscriptionStatus });
+	}
 
-  const premiumSubscriptions = await prisma.premiumUser.findMany({
-    where: { AND: andConditions },
-    take: limit,
-    skip,
-    orderBy: { createdAt: "desc" },
-    include: {
-      package: true,
-      area: true,
-      payments: true,
-    },
-  });
+	const premiumSubscriptions = await prisma.premiumUser.findMany({
+		where: { AND: andConditions },
+		take: limit,
+		skip,
+		orderBy: { createdAt: "desc" },
+		include: {
+			package: true,
+			area: true,
+			payments: true,
+		},
+	});
 
-  const total = await prisma.premiumUser.count({
-    where: { AND: andConditions },
-  });
+	const total = await prisma.premiumUser.count({
+		where: { AND: andConditions },
+	});
 
-  return {
-    data: premiumSubscriptions,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+	return {
+		data: premiumSubscriptions,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
 };
 
 const getMySinglePremiumSubscription = async (
-  premiumUserId: string,
-  user: RequestUser,
+	premiumUserId: string,
+	user: RequestUser,
 ) => {
-  const premiumSubscription = await prisma.premiumUser.findUnique({
-    where: { id: premiumUserId, isDeleted: false },
-    include: {
-      package: true,
-      area: true,
-      payments: true,
-    },
-  });
+	const premiumSubscription = await prisma.premiumUser.findUnique({
+		where: { id: premiumUserId, isDeleted: false },
+		include: {
+			package: true,
+			area: true,
+			payments: true,
+		},
+	});
 
-  if (!premiumSubscription) {
-    throw new AppError(httpStatus.NOT_FOUND, "Premium Subscription Not Found");
-  }
+	if (!premiumSubscription) {
+		throw new AppError(httpStatus.NOT_FOUND, "Premium Subscription Not Found");
+	}
 
-  // make sure customer can only see their own subscription
-  if (premiumSubscription.userId !== user.userId) {
-    throw new AppError(
-      httpStatus.FORBIDDEN,
-      "You Are Not Allowed To View This Subscription",
-    );
-  }
+	// make sure customer can only see their own subscription
+	if (premiumSubscription.userId !== user.userId) {
+		throw new AppError(
+			httpStatus.FORBIDDEN,
+			"You Are Not Allowed To View This Subscription",
+		);
+	}
 
-  return premiumSubscription;
+	return premiumSubscription;
 };
 
 const updateUserStatus = async (
-  userId: string,
-  payload: IUpdateUserStatusPayload,
+	userId: string,
+	payload: IUpdateUserStatusPayload,
 ) => {
-  const existingUser = await prisma.user.findUnique({
-    where: { id: userId, isDeleted: false },
-  });
+	const existingUser = await prisma.user.findUnique({
+		where: { id: userId, isDeleted: false },
+	});
 
-  if (!existingUser) {
-    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
-  }
+	if (!existingUser) {
+		throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+	}
 
-  if (
-    existingUser.role === "SUPER_ADMIN" ||
-    existingUser.role === "ADMIN"
-  ) {
-    throw new AppError(
-      httpStatus.FORBIDDEN,
-      "Cannot Change Status Of Admin Users",
-    );
-  }
+	if (existingUser.role === "SUPER_ADMIN" || existingUser.role === "ADMIN") {
+		throw new AppError(
+			httpStatus.FORBIDDEN,
+			"Cannot Change Status Of Admin Users",
+		);
+	}
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { status: payload.status },
-    omit: { password: true },
-  });
+	const updatedUser = await prisma.user.update({
+		where: { id: userId },
+		data: { status: payload.status },
+		omit: { password: true },
+	});
 
-  return updatedUser;
+	return updatedUser;
 };
 
 const deleteUser = async (userId: string) => {
-  const existingUser = await prisma.user.findUnique({
-    where: { id: userId, isDeleted: false },
-  });
+	const existingUser = await prisma.user.findUnique({
+		where: { id: userId, isDeleted: false },
+	});
 
-  if (!existingUser) {
-    throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
-  }
+	if (!existingUser) {
+		throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
+	}
 
-  if (
-    existingUser.role === "SUPER_ADMIN" ||
-    existingUser.role === "ADMIN"
-  ) {
-    throw new AppError(
-      httpStatus.FORBIDDEN,
-      "Cannot Delete Admin Users",
-    );
-  }
+	if (existingUser.role === "SUPER_ADMIN" || existingUser.role === "ADMIN") {
+		throw new AppError(httpStatus.FORBIDDEN, "Cannot Delete Admin Users");
+	}
 
-  const deletedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { isDeleted: true, deletedAt: new Date() },
-    omit: { password: true },
-  });
+	const deletedUser = await prisma.user.update({
+		where: { id: userId },
+		data: { isDeleted: true, deletedAt: new Date() },
+		omit: { password: true },
+	});
 
-  return deletedUser;
+	return deletedUser;
 };
 
-  export const UserService = {
+export const UserService = {
 	updateMyProfile,
-  changePassword,
-  uploadProfileImage,
-  getAllUsers,
+	changePassword,
+	uploadProfileImage,
+	getAllUsers,
 	getSingleUser,
-  getAllPremiumUsers,
-  getSinglePremiumUser,
-  getMyPremiumSubscriptions,
-  getMySinglePremiumSubscription,
+	getAllPremiumUsers,
+	getSinglePremiumUser,
+	getMyPremiumSubscriptions,
+	getMySinglePremiumSubscription,
 	updateUserStatus,
 	deleteUser,
 };

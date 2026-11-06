@@ -3,63 +3,65 @@ import { upload } from "../../lib/multer";
 import { auth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
 import { TechnicianController } from "./technician.controller";
-import { UpdateOutageStatusValidationZodSchema, UpdateTechnicianProfileValidationZodSchema } from "./technician.validation";
+import {
+	UpdateOutageStatusValidationZodSchema,
+	UpdateTechnicianProfileValidationZodSchema,
+} from "./technician.validation";
 import { Role } from "../../../../generated/prisma/enums";
 
 const router = Router();
 
 router.post(
-  "/apply-as-technician",
-  upload.single("resume"),
-  TechnicianController.applyTechnician,
+	"/apply-as-technician",
+	upload.single("resume"),
+	TechnicianController.applyTechnician,
 );
 router.post(
-  "/apply-as-technician/verify-email",
-  TechnicianController.verifyTechnicianEmail,
+	"/apply-as-technician/verify-email",
+	TechnicianController.verifyTechnicianEmail,
 );
 
 router.post(
-  "/approve-technician",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  TechnicianController.approveTechnician,
+	"/approve-technician",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	TechnicianController.approveTechnician,
 );
 
 router.get(
-  "/all-technicians",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  TechnicianController.getAllTechnician,
+	"/all-technicians",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	TechnicianController.getAllTechnician,
 );
 
 router.patch(
-  "/update-my-profile",
-  auth(Role.TECHNICIAN),
-  validateRequest(UpdateTechnicianProfileValidationZodSchema),
-  TechnicianController.updateTechnicianProfile,
+	"/update-my-profile",
+	auth(Role.TECHNICIAN),
+	validateRequest(UpdateTechnicianProfileValidationZodSchema),
+	TechnicianController.updateTechnicianProfile,
 );
 
 router.get(
-  "/public/all-technicians",
-  TechnicianController.getAllTechnicianListPublic,
+	"/public/all-technicians",
+	TechnicianController.getAllTechnicianListPublic,
 );
 
 router.get(
-  "/public/:technicianId",
-  TechnicianController.getSingleTechnicianPublicProfile,
+	"/public/:technicianId",
+	TechnicianController.getSingleTechnicianPublicProfile,
 );
 
 // technician
 router.get(
-  "/my-assignments",
-  auth(Role.TECHNICIAN),
-  TechnicianController.getMyAssignments,
+	"/my-assignments",
+	auth(Role.TECHNICIAN),
+	TechnicianController.getMyAssignments,
 );
 
 router.patch(
-  "/:outageId/update-status",
-  auth(Role.TECHNICIAN),
-  validateRequest(UpdateOutageStatusValidationZodSchema),
-  TechnicianController.updateStatus,
-); 
+	"/:outageId/update-status",
+	auth(Role.TECHNICIAN),
+	validateRequest(UpdateOutageStatusValidationZodSchema),
+	TechnicianController.updateStatus,
+);
 
 export const TechnicianRoutes = router;
- 

@@ -2,410 +2,409 @@ import path from "path";
 import ejs from "ejs";
 import { prisma } from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
-import { ICreateScheduledOutagePayload, IUpdateScheduledOutagePayload } from "./scheduleOutage.interface";
+import type {
+	ICreateScheduledOutagePayload,
+	IUpdateScheduledOutagePayload,
+} from "./scheduleOutage.interface";
 import httpStatus from "http-status";
 import { transporter } from "../../lib/nodemailer";
 import config from "../../config";
 import { updateOutageStatuses } from "../../utils/updateOutageStatuses";
-import { IQuery } from "../../interfaces";
-import { ScheduledOutageStatus, SubscriptionStatus } from "../../../../generated/prisma/enums";
-import { ScheduledOutageWhereInput } from "../../../../generated/prisma/models";
+import type { IQuery } from "../../interfaces";
+import {
+	ScheduledOutageStatus,
+	SubscriptionStatus,
+} from "../../../../generated/prisma/enums";
+import type { ScheduledOutageWhereInput } from "../../../../generated/prisma/models";
 
 const createScheduledOutage = async (
-  payload: ICreateScheduledOutagePayload,
+	payload: ICreateScheduledOutagePayload,
 ) => {
-  const existingArea = await prisma.area.findUnique({
-    where: { id: payload.areaId, isDeleted: false },
-  });
+	const existingArea = await prisma.area.findUnique({
+		where: { id: payload.areaId, isDeleted: false },
+	});
 
-  if (!existingArea) {
-    throw new AppError(httpStatus.NOT_FOUND, "Area Not Found");
-  }
+	if (!existingArea) {
+		throw new AppError(httpStatus.NOT_FOUND, "Area Not Found");
+	}
 
-  // check technician exists if provided
-  if (payload.technicianId) {
-    const existingTechnician = await prisma.technician.findUnique({
-      where: { id: payload.technicianId, isDeleted: false },
-    });
+	// check technician exists if provided
+	if (payload.technicianId) {
+		const existingTechnician = await prisma.technician.findUnique({
+			where: { id: payload.technicianId, isDeleted: false },
+		});
 
-    if (!existingTechnician) {
-      throw new AppError(httpStatus.NOT_FOUND, "Technician Not Found");
-    }
-  }
+		if (!existingTechnician) {
+			throw new AppError(httpStatus.NOT_FOUND, "Technician Not Found");
+		}
+	}
 
-  const scheduledOutage = await prisma.scheduledOutage.create({
-    data: {
-      reason: payload.reason,
-      startTime: new Date(payload.startTime),
-      endTime: new Date(payload.endTime),
-      areaId: payload.areaId,
-      technicianId: payload.technicianId ?? null,
-    },
-    include: {
-      area: true,
-      technician: {
-        include: { user: true },
-      },
-    },
-  });
+	const scheduledOutage = await prisma.scheduledOutage.create({
+		data: {
+			reason: payload.reason,
+			startTime: new Date(payload.startTime),
+			endTime: new Date(payload.endTime),
+			areaId: payload.areaId,
+			technicianId: payload.technicianId ?? null,
+		},
+		include: {
+			area: true,
+			technician: {
+				include: { user: true },
+			},
+		},
+	});
 
-  // send emails to premium users
-  const premiumUsers = await prisma.premiumUser.findMany({
-    where: {
-      areaId: payload.areaId,
-      status: SubscriptionStatus.ACTIVE,
-      isDeleted: false,
-    },
-    include: { user: true },
-  });
+	// send emails to premium users
+	const premiumUsers = await prisma.premiumUser.findMany({
+		where: {
+			areaId: payload.areaId,
+			status: SubscriptionStatus.ACTIVE,
+			isDeleted: false,
+		},
+		include: { user: true },
+	});
 
-  if (premiumUsers.length > 0) {
-    const templatePath = path.join(
-      process.cwd(),
-      "src/app/templates/scheduled-outage-notification.ejs",
-    );
+	if (premiumUsers.length > 0) {
+		const templatePath = path.join(
+			process.cwd(),
+			"src/app/templates/scheduled-outage-notification.ejs",
+		);
 
-    await Promise.all(
-      premiumUsers.map(async (premiumUser) => {
-        const templateData = {
-          name: premiumUser.user.name,
-          area: existingArea.name,
-          district: existingArea.district,
-          reason: payload.reason,
-          startTime: new Date(payload.startTime).toLocaleString(),
-          endTime: new Date(payload.endTime).toLocaleString(),
-        };
+		await Promise.all(
+			premiumUsers.map(async (premiumUser) => {
+				const templateData = {
+					name: premiumUser.user.name,
+					area: existingArea.name,
+					district: existingArea.district,
+					reason: payload.reason,
+					startTime: new Date(payload.startTime).toLocaleString(),
+					endTime: new Date(payload.endTime).toLocaleString(),
+				};
 
-        const html = await ejs.renderFile(templatePath, templateData);
+				const html = await ejs.renderFile(templatePath, templateData);
 
-        await transporter.sendMail({
-          from: config.email_sender,
-          to: premiumUser.user.email,
-          subject: `⚡ Power Outage Alert - ${existingArea.name}`,
-          html,
-        });
-      }),
-    );
-  }
+				await transporter.sendMail({
+					from: config.email_sender,
+					to: premiumUser.user.email,
+					subject: `⚡ Power Outage Alert - ${existingArea.name}`,
+					html,
+				});
+			}),
+		);
+	}
 
-  // send email to assigned technician if provided
-  if (scheduledOutage.technician) {
-    const technicianTemplatePath = path.join(
-      process.cwd(),
-      "src/app/templates/technician-assigned.ejs",
-    );
+	// send email to assigned technician if provided
+	if (scheduledOutage.technician) {
+		const technicianTemplatePath = path.join(
+			process.cwd(),
+			"src/app/templates/technician-assigned.ejs",
+		);
 
-    const templateData = {
-      name: scheduledOutage.technician.user.name,
-      area: existingArea.name,
-      district: existingArea.district,
-      type: "Scheduled Outage",
-      reason: payload.reason,
-    };
+		const templateData = {
+			name: scheduledOutage.technician.user.name,
+			area: existingArea.name,
+			district: existingArea.district,
+			type: "Scheduled Outage",
+			reason: payload.reason,
+		};
 
-    const html = await ejs.renderFile(technicianTemplatePath, templateData);
+		const html = await ejs.renderFile(technicianTemplatePath, templateData);
 
-    await transporter.sendMail({
-      from: config.email_sender,
-      to: scheduledOutage.technician.user.email,
-      subject: `New Assignment - ${existingArea.name}`,
-      html,
-    });
-  }
+		await transporter.sendMail({
+			from: config.email_sender,
+			to: scheduledOutage.technician.user.email,
+			subject: `New Assignment - ${existingArea.name}`,
+			html,
+		});
+	}
 
-  return scheduledOutage;
+	return scheduledOutage;
 };
 
 const getAllScheduledOutages = async (query: IQuery) => {
+	await updateOutageStatuses();
 
-  await updateOutageStatuses();
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
+	const sortBy = query.sortBy ?? "startTime";
+	const sortOrder = query.sortOrder ?? "asc";
 
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ?? "startTime";
-  const sortOrder = query.sortOrder ?? "asc";
+	const andConditions: ScheduledOutageWhereInput[] = [{ isDeleted: false }];
 
-  const andConditions: ScheduledOutageWhereInput[] = [{ isDeleted: false }];
+	if (query.status) {
+		andConditions.push({ status: query.status as ScheduledOutageStatus });
+	}
 
-  if (query.status) {
-    andConditions.push({ status: query.status as ScheduledOutageStatus });
-  }
+	if (query.areaId) {
+		andConditions.push({ areaId: query.areaId });
+	}
 
-  if (query.areaId) {
-    andConditions.push({ areaId: query.areaId });
-  }
+	if (query.searchTerm) {
+		andConditions.push({
+			reason: { contains: query.searchTerm, mode: "insensitive" },
+		});
+	}
 
-  if (query.searchTerm) {
-    andConditions.push({
-      reason: { contains: query.searchTerm, mode: "insensitive" },
-    });
-  }
+	const outages = await prisma.scheduledOutage.findMany({
+		where: { AND: andConditions },
+		take: limit,
+		skip,
+		orderBy: { [sortBy]: sortOrder },
+		include: { area: true },
+	});
 
-  const outages = await prisma.scheduledOutage.findMany({
-    where: { AND: andConditions },
-    take: limit,
-    skip,
-    orderBy: { [sortBy]: sortOrder },
-    include: { area: true },
-  });
+	const total = await prisma.scheduledOutage.count({
+		where: { AND: andConditions },
+	});
 
-  const total = await prisma.scheduledOutage.count({
-    where: { AND: andConditions },
-  });
-
-  return {
-    data: outages,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+	return {
+		data: outages,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
 };
 
 const getSingleScheduledOutage = async (outageId: string) => {
-  await updateOutageStatuses();
+	await updateOutageStatuses();
 
-  const outage = await prisma.scheduledOutage.findUnique({
-    where: { id: outageId, isDeleted: false },
-    include: { area: true },
-  });
+	const outage = await prisma.scheduledOutage.findUnique({
+		where: { id: outageId, isDeleted: false },
+		include: { area: true },
+	});
 
-  if (!outage) {
-    throw new AppError(httpStatus.NOT_FOUND, "Scheduled Outage Not Found");
-  }
+	if (!outage) {
+		throw new AppError(httpStatus.NOT_FOUND, "Scheduled Outage Not Found");
+	}
 
-  return outage;
+	return outage;
 };
 
 const updateScheduledOutage = async (
-  outageId: string,
-  payload: IUpdateScheduledOutagePayload,
+	outageId: string,
+	payload: IUpdateScheduledOutagePayload,
 ) => {
-  const existingOutage = await prisma.scheduledOutage.findUnique({
-    where: { id: outageId, isDeleted: false },
-    include: { area: true },
-  });
+	const existingOutage = await prisma.scheduledOutage.findUnique({
+		where: { id: outageId, isDeleted: false },
+		include: { area: true },
+	});
 
-  if (!existingOutage) {
-    throw new AppError(httpStatus.NOT_FOUND, "Scheduled Outage Not Found");
-  }
+	if (!existingOutage) {
+		throw new AppError(httpStatus.NOT_FOUND, "Scheduled Outage Not Found");
+	}
 
-  if (existingOutage.status === ScheduledOutageStatus.COMPLETED) {
-    throw new AppError(
-      httpStatus.CONFLICT,
-      "Cannot Update A Completed Outage",
-    );
-  }
+	if (existingOutage.status === ScheduledOutageStatus.COMPLETED) {
+		throw new AppError(httpStatus.CONFLICT, "Cannot Update A Completed Outage");
+	}
 
-  if (existingOutage.status === ScheduledOutageStatus.CANCELLED) {
-    throw new AppError(
-      httpStatus.CONFLICT,
-      "Cannot Update A Cancelled Outage",
-    );
-  }
+	if (existingOutage.status === ScheduledOutageStatus.CANCELLED) {
+		throw new AppError(httpStatus.CONFLICT, "Cannot Update A Cancelled Outage");
+	}
 
-  // if cancelling
-  if (payload.status === ScheduledOutageStatus.CANCELLED) {
-    const cancelledOutage = await prisma.scheduledOutage.update({
-      where: { id: outageId },
-      data: { status: ScheduledOutageStatus.CANCELLED },
-      include: { area: true },
-    });
+	// if cancelling
+	if (payload.status === ScheduledOutageStatus.CANCELLED) {
+		const cancelledOutage = await prisma.scheduledOutage.update({
+			where: { id: outageId },
+			data: { status: ScheduledOutageStatus.CANCELLED },
+			include: { area: true },
+		});
 
-    // find all active premium users in this area
-    const premiumUsers = await prisma.premiumUser.findMany({
-      where: {
-        areaId: existingOutage.areaId,
-        status: SubscriptionStatus.ACTIVE,
-        isDeleted: false,
-      },
-      include: { user: true },
-    });
+		// find all active premium users in this area
+		const premiumUsers = await prisma.premiumUser.findMany({
+			where: {
+				areaId: existingOutage.areaId,
+				status: SubscriptionStatus.ACTIVE,
+				isDeleted: false,
+			},
+			include: { user: true },
+		});
 
-    // send cancellation emails
-    if (premiumUsers.length > 0) {
-      const templatePath = path.join(
-        process.cwd(),
-        "src/app/templates/scheduled-outage-cancelled.ejs",
-      );
+		// send cancellation emails
+		if (premiumUsers.length > 0) {
+			const templatePath = path.join(
+				process.cwd(),
+				"src/app/templates/scheduled-outage-cancelled.ejs",
+			);
 
-      await Promise.all(
-        premiumUsers.map(async (premiumUser) => {
-          const templateData = {
-            name: premiumUser.user.name,
-            area: existingOutage.area.name,
-            district: existingOutage.area.district,
-            reason: existingOutage.reason,
-            startTime: existingOutage.startTime.toLocaleString(),
-            endTime: existingOutage.endTime.toLocaleString(),
-          };
+			await Promise.all(
+				premiumUsers.map(async (premiumUser) => {
+					const templateData = {
+						name: premiumUser.user.name,
+						area: existingOutage.area.name,
+						district: existingOutage.area.district,
+						reason: existingOutage.reason,
+						startTime: existingOutage.startTime.toLocaleString(),
+						endTime: existingOutage.endTime.toLocaleString(),
+					};
 
-          const html = await ejs.renderFile(templatePath, templateData);
+					const html = await ejs.renderFile(templatePath, templateData);
 
-          await transporter.sendMail({
-            from: config.email_sender,
-            to: premiumUser.user.email,
-            subject: `✅ Outage Cancelled - ${existingOutage.area.name}`,
-            html,
-          });
-        }),
-      );
-    }
+					await transporter.sendMail({
+						from: config.email_sender,
+						to: premiumUser.user.email,
+						subject: `✅ Outage Cancelled - ${existingOutage.area.name}`,
+						html,
+					});
+				}),
+			);
+		}
 
-    return cancelledOutage;
-  }
+		return cancelledOutage;
+	}
 
-  // normal update — only UPCOMING can be updated
-  if (existingOutage.status !== ScheduledOutageStatus.UPCOMING) {
-    throw new AppError(
-      httpStatus.CONFLICT,
-      "Only Upcoming Outages Can Be Updated",
-    );
-  }
+	// normal update — only UPCOMING can be updated
+	if (existingOutage.status !== ScheduledOutageStatus.UPCOMING) {
+		throw new AppError(
+			httpStatus.CONFLICT,
+			"Only Upcoming Outages Can Be Updated",
+		);
+	}
 
-  const updatedOutage = await prisma.scheduledOutage.update({
-    where: { id: outageId },
-    data: {
-      ...payload,
-      startTime: payload.startTime ? new Date(payload.startTime) : undefined,
-      endTime: payload.endTime ? new Date(payload.endTime) : undefined,
-    },
-    include: { area: true },
-  });
+	const updatedOutage = await prisma.scheduledOutage.update({
+		where: { id: outageId },
+		data: {
+			...payload,
+			startTime: payload.startTime ? new Date(payload.startTime) : undefined,
+			endTime: payload.endTime ? new Date(payload.endTime) : undefined,
+		},
+		include: { area: true },
+	});
 
-  return updatedOutage;
+	return updatedOutage;
 };
 const deleteScheduledOutage = async (outageId: string) => {
-  const existingOutage = await prisma.scheduledOutage.findUnique({
-    where: { id: outageId, isDeleted: false },
-  });
+	const existingOutage = await prisma.scheduledOutage.findUnique({
+		where: { id: outageId, isDeleted: false },
+	});
 
-  if (!existingOutage) {
-    throw new AppError(httpStatus.NOT_FOUND, "Scheduled Outage Not Found");
-  }
+	if (!existingOutage) {
+		throw new AppError(httpStatus.NOT_FOUND, "Scheduled Outage Not Found");
+	}
 
-  if (existingOutage.status === ScheduledOutageStatus.ONGOING) {
-    throw new AppError(httpStatus.CONFLICT, "Cannot Delete An Ongoing Outage");
-  }
+	if (existingOutage.status === ScheduledOutageStatus.ONGOING) {
+		throw new AppError(httpStatus.CONFLICT, "Cannot Delete An Ongoing Outage");
+	}
 
-  const deletedOutage = await prisma.scheduledOutage.update({
-    where: { id: outageId },
-    data: { isDeleted: true, deletedAt: new Date() },
-  });
+	const deletedOutage = await prisma.scheduledOutage.update({
+		where: { id: outageId },
+		data: { isDeleted: true, deletedAt: new Date() },
+	});
 
-  return deletedOutage;
+	return deletedOutage;
 };
 
 const getPublicScheduledOutages = async (query: IQuery) => {
-  await updateOutageStatuses();
+	await updateOutageStatuses();
 
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
 
-  const andConditions: ScheduledOutageWhereInput[] = [{ isDeleted: false }];
+	const andConditions: ScheduledOutageWhereInput[] = [{ isDeleted: false }];
 
-  // if status provided use it, otherwise show UPCOMING and ONGOING only
-  if (query.status) {
-    andConditions.push({ status: query.status as ScheduledOutageStatus });
-  } else {
-    andConditions.push({
-      status: {
-        in: [ScheduledOutageStatus.UPCOMING, ScheduledOutageStatus.ONGOING],
-      },
-    });
-  }
+	// if status provided use it, otherwise show UPCOMING and ONGOING only
+	if (query.status) {
+		andConditions.push({ status: query.status as ScheduledOutageStatus });
+	} else {
+		andConditions.push({
+			status: {
+				in: [ScheduledOutageStatus.UPCOMING, ScheduledOutageStatus.ONGOING],
+			},
+		});
+	}
 
-  if (query.areaId) {
-    andConditions.push({ areaId: query.areaId });
-  }
+	if (query.areaId) {
+		andConditions.push({ areaId: query.areaId });
+	}
 
-  const outages = await prisma.scheduledOutage.findMany({
-    where: { AND: andConditions },
-    take: limit,
-    skip,
-    orderBy: { startTime: "asc" },
-    select: {
-      id: true,
-      reason: true,
-      startTime: true,
-      endTime: true,
-      status: true,
-      area: true,
-    },
-  });
+	const outages = await prisma.scheduledOutage.findMany({
+		where: { AND: andConditions },
+		take: limit,
+		skip,
+		orderBy: { startTime: "asc" },
+		select: {
+			id: true,
+			reason: true,
+			startTime: true,
+			endTime: true,
+			status: true,
+			area: true,
+		},
+	});
 
-  const total = await prisma.scheduledOutage.count({
-    where: { AND: andConditions },
-  });
+	const total = await prisma.scheduledOutage.count({
+		where: { AND: andConditions },
+	});
 
-  return {
-    data: outages,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+	return {
+		data: outages,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
 };
 
 const getPublicOutagesByArea = async (areaId: string, query: IQuery) => {
-  await updateOutageStatuses();
+	await updateOutageStatuses();
 
-  const limit = query.limit ? Number(query.limit) : 10;
-  const page = query.page ? Number(query.page) : 1;
-  const skip = (page - 1) * limit;
+	const limit = query.limit ? Number(query.limit) : 10;
+	const page = query.page ? Number(query.page) : 1;
+	const skip = (page - 1) * limit;
 
-  const existingArea = await prisma.area.findUnique({
-    where: { id: areaId, isDeleted: false },
-  });
+	const existingArea = await prisma.area.findUnique({
+		where: { id: areaId, isDeleted: false },
+	});
 
-  if (!existingArea) {
-    throw new AppError(httpStatus.NOT_FOUND, "Area Not Found");
-  }
+	if (!existingArea) {
+		throw new AppError(httpStatus.NOT_FOUND, "Area Not Found");
+	}
 
-  // if status is provided use it, otherwise show UPCOMING and ONGOING only
-  const statusFilter = query.status
-    ? { status: query.status as ScheduledOutageStatus }
-    : {
-        status: {
-          in: [ScheduledOutageStatus.UPCOMING, ScheduledOutageStatus.ONGOING],
-        },
-      };
+	// if status is provided use it, otherwise show UPCOMING and ONGOING only
+	const statusFilter = query.status
+		? { status: query.status as ScheduledOutageStatus }
+		: {
+				status: {
+					in: [ScheduledOutageStatus.UPCOMING, ScheduledOutageStatus.ONGOING],
+				},
+			};
 
-  const outages = await prisma.scheduledOutage.findMany({
-    where: {
-      areaId,
-      isDeleted: false,
-      ...statusFilter,
-    },
-    take: limit,
-    skip,
-    orderBy: { startTime: "asc" },
-    select: {
-      id: true,
-      reason: true,
-      startTime: true,
-      endTime: true,
-      status: true,
-      area: true,
-    },
-  });
+	const outages = await prisma.scheduledOutage.findMany({
+		where: {
+			areaId,
+			isDeleted: false,
+			...statusFilter,
+		},
+		take: limit,
+		skip,
+		orderBy: { startTime: "asc" },
+		select: {
+			id: true,
+			reason: true,
+			startTime: true,
+			endTime: true,
+			status: true,
+			area: true,
+		},
+	});
 
-  const total = await prisma.scheduledOutage.count({
-    where: {
-      areaId,
-      isDeleted: false,
-      ...statusFilter,
-    },
-  });
+	const total = await prisma.scheduledOutage.count({
+		where: {
+			areaId,
+			isDeleted: false,
+			...statusFilter,
+		},
+	});
 
-  return {
-    data: outages,
-    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+	return {
+		data: outages,
+		meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+	};
 };
 
 export const ScheduledOutageServices = {
-  createScheduledOutage,
-  getAllScheduledOutages,
-  getSingleScheduledOutage,
-  updateScheduledOutage,
-  deleteScheduledOutage,
-  getPublicScheduledOutages,
-  getPublicOutagesByArea,
+	createScheduledOutage,
+	getAllScheduledOutages,
+	getSingleScheduledOutage,
+	updateScheduledOutage,
+	deleteScheduledOutage,
+	getPublicScheduledOutages,
+	getPublicOutagesByArea,
 };

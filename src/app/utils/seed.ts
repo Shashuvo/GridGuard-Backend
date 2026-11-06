@@ -1,7 +1,10 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 import config from "../config";
-import { Role, TechnicianVerificationStatus } from "../../../generated/prisma/enums";
+import {
+	Role,
+	TechnicianVerificationStatus,
+} from "../../../generated/prisma/enums";
 
 export const seedSuperAdmin = async () => {
 	try {
@@ -135,8 +138,8 @@ export const seedTesterTechnician = async () => {
 				emailVerified: true,
 				technician: {
 					create: {
-                        name: name,
-                        email: email,
+						name: name,
+						email: email,
 						experienceYears: 3,
 						bio: "Experienced power grid technician",
 						contactNumber: "01700000000",

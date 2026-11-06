@@ -2,54 +2,53 @@ import { Router } from "express";
 import { auth } from "../../middleware/checkAuth";
 import { validateRequest } from "../../middleware/validateRequest";
 import { ScheduledOutageController } from "./scheduleOutage.controller";
-import { CreateScheduledOutageValidationZodSchema, UpdateScheduledOutageValidationZodSchema } from "./scheduleOutage.validation";
+import {
+	CreateScheduledOutageValidationZodSchema,
+	UpdateScheduledOutageValidationZodSchema,
+} from "./scheduleOutage.validation";
 import { Role } from "../../../../generated/prisma/enums";
 
 const router = Router();
 
-// public 
-router.get(
-  "/public/all",
-  ScheduledOutageController.getPublicScheduledOutages,
-);
+// public
+router.get("/public/all", ScheduledOutageController.getPublicScheduledOutages);
 
 router.get(
-  "/public/area/:areaId",
-  ScheduledOutageController.getPublicOutagesByArea,
+	"/public/area/:areaId",
+	ScheduledOutageController.getPublicOutagesByArea,
 );
 
 // admin
 router.post(
-  "/create",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  validateRequest(CreateScheduledOutageValidationZodSchema),
-  ScheduledOutageController.createScheduledOutage,
+	"/create",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	validateRequest(CreateScheduledOutageValidationZodSchema),
+	ScheduledOutageController.createScheduledOutage,
 );
 
 router.get(
-  "/all",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  ScheduledOutageController.getAllScheduledOutages,
+	"/all",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	ScheduledOutageController.getAllScheduledOutages,
 );
 
 router.get(
-  "/:outageId",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  ScheduledOutageController.getSingleScheduledOutage,
+	"/:outageId",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	ScheduledOutageController.getSingleScheduledOutage,
 );
 
 router.patch(
-  "/:outageId",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  validateRequest(UpdateScheduledOutageValidationZodSchema),
-  ScheduledOutageController.updateScheduledOutage,
+	"/:outageId",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	validateRequest(UpdateScheduledOutageValidationZodSchema),
+	ScheduledOutageController.updateScheduledOutage,
 );
 
 router.delete(
-  "/:outageId",
-  auth(Role.ADMIN, Role.SUPER_ADMIN),
-  ScheduledOutageController.deleteScheduledOutage,
+	"/:outageId",
+	auth(Role.ADMIN, Role.SUPER_ADMIN),
+	ScheduledOutageController.deleteScheduledOutage,
 );
-
 
 export const ScheduledOutageRoutes = router;

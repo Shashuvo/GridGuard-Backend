@@ -1,4 +1,4 @@
-import { Role } from "../../../../generated/prisma/enums";
+import type { Role } from "../../../../generated/prisma/enums";
 
 export interface IRegisterCustomerPayload {
 	name: string;
@@ -7,12 +7,12 @@ export interface IRegisterCustomerPayload {
 	customer: {
 		contactNumber?: string;
 	};
-};
+}
 
 export interface IVerifyEmailPayload {
 	email: string;
 	otp: string;
-};
+}
 
 export interface ILoginUserPayload {
 	email: string;

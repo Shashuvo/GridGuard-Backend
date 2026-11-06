@@ -5,7 +5,6 @@ import { UserValidation } from "./auth.validation";
 import { auth } from "../../middleware/checkAuth";
 import { Role } from "../../../../generated/prisma/enums";
 
-
 const router = Router();
 
 router.post(
