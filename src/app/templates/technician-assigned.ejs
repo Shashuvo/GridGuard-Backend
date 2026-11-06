@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Application approved</title>
+    <title>New assignment</title>
     <style>
       body {
         margin: 0;
@@ -55,7 +55,7 @@
       h1 {
         font-size: 22px;
         line-height: 1.35;
-        margin: 20px 0 12px;
+        margin: 16px 0 12px;
         color: #1a1400;
         font-weight: 650;
         text-align: center;
@@ -66,6 +66,36 @@
         line-height: 1.6;
         margin: 0 0 16px;
         color: #5c5330;
+      }
+
+      .detail-label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        color: #8a6500;
+        padding-bottom: 3px;
+      }
+
+      .detail-value {
+        font-size: 14px;
+        line-height: 1.5;
+        color: #1a1400;
+      }
+
+      .alert-box {
+        margin: 8px 0 4px;
+        background-color: #fdf4ec;
+        border: 1px solid #f2ddc4;
+        border-radius: 10px;
+        padding: 16px 18px;
+      }
+
+      .alert-box p {
+        font-size: 13px;
+        color: #8a5a1f;
+        margin: 0;
+        line-height: 1.6;
       }
 
       .divider {
@@ -92,7 +122,7 @@
     </style>
   </head>
   <body>
-    <div class="preheader">Good news — your GridGuard application has been approved.</div>
+    <div class="preheader">You have a new outage assignment in <%= area %>. Check your dashboard for details.</div>
 
     <table role="presentation" width="100%" class="wrapper">
       <tr>
@@ -114,22 +144,64 @@
                     <td align="center">
                       <table role="presentation" cellpadding="0" cellspacing="0">
                         <tr>
-                          <td width="56" height="56" align="center" valign="middle" bgcolor="#ffc400" style="width:56px;height:56px;background-color:#ffc400;border-radius:28px;font-size:28px;line-height:56px;font-weight:700;color:#1a1400;">&#10003;</td>
+                          <td bgcolor="#ffc400" style="background-color:#ffc400;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:1px;color:#1a1400;">NEW ASSIGNMENT</td>
                         </tr>
                       </table>
                     </td>
                   </tr>
                 </table>
 
-                <h1>Your application is approved</h1>
-                <p style="text-align:center;">Hi <%= name %>, great news — we've reviewed your application and approved it. Welcome to the GridGuard team.</p>
+                <h1>Hi <%= name %>, you've been assigned</h1>
+                <p style="text-align:center;">You have been assigned to a power outage. Check your dashboard for the full details.</p>
 
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;background-color:#fff8dc;border:1px solid #f5e1a0;border-radius:12px;margin:8px 0 24px;">
                   <tr>
                     <td style="padding:16px 22px;border-bottom:1px solid #f5e1a0;">
-                      <div style="font-size:14px;font-weight:600;color:#1a1400;padding-bottom:3px;">Sign in to your dashboard</div>
-                      <div style="font-size:13px;line-height:1.55;color:#7a7048;">Use the email and password you registered with.</div>
+                      <div class="detail-label">Area</div>
+                      <div class="detail-value"><%= area %>, <%= district %></div>
                     </td>
                   </tr>
                   <tr>
-                    <td
+                    <td style="padding:16px 22px;border-bottom:1px solid #f5e1a0;">
+                      <div class="detail-label">Type</div>
+                      <div class="detail-value"><%= type %></div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:16px 22px;">
+                      <div class="detail-label">Reason</div>
+                      <div class="detail-value"><%= reason %></div>
+                    </td>
+                  </tr>
+                </table>
+
+                <% if (locals.dashboardUrl) { %>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td align="center" style="padding:0 0 20px;">
+                      <a href="<%= dashboardUrl %>" style="display:inline-block;background-color:#ffc400;color:#1a1400;font-size:15px;font-weight:700;padding:13px 28px;border-radius:10px;">Open dashboard</a>
+                    </td>
+                  </tr>
+                </table>
+                <% } %>
+
+                <div class="alert-box">
+                  <p>Please respond promptly and update the status as you make progress.</p>
+                </div>
+
+                <hr class="divider" />
+
+                <p style="font-size: 13px; color: #7a7048; margin: 0;">Log in to your dashboard to view full details and manage this assignment.</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="footer">
+                <p>&copy; GridGuard. All rights reserved.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
