@@ -1,0 +1,37 @@
+import { Router } from "express";
+import { auth } from "../../middleware/checkAuth";
+import { validateRequest } from "../../middleware/validateRequest";
+import { PaymentController } from "./payment.controller";
+import { BuyPremiumValidationZodSchema } from "./payment.validation";
+import { Role } from "../../../../generated/prisma/enums";
+
+const router = Router();
+
+router.post(
+  "/buy-premium",
+  auth(Role.CUSTOMER),
+  validateRequest(BuyPremiumValidationZodSchema),
+  PaymentController.buyPremium,
+);
+
+router.get("/callback", PaymentController.paymentCallback);
+
+router.get(
+  "/my-payments",
+  auth(Role.CUSTOMER),
+  PaymentController.getMyPayments,
+);
+
+router.get(
+  "/all",
+  auth(Role.ADMIN, Role.SUPER_ADMIN),
+  PaymentController.getAllPayments,
+);
+
+router.get(
+  "/:paymentId",
+  auth(Role.ADMIN, Role.SUPER_ADMIN, Role.CUSTOMER),
+  PaymentController.getPaymentDetails,
+);
+
+export const PaymentRoutes = router; 
