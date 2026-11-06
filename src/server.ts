@@ -1,9 +1,10 @@
 import app from "./app";
 import config from "./app/config";
+import { startCronJobs } from "./app/lib/cron";
 import { transporter } from "./app/lib/nodemailer";
 import { prisma } from "./app/lib/prisma";
 import { redisClient } from "./app/lib/redis";
-
+import { seedSuperAdmin, seedTesterAdmin, seedTesterTechnician } from "./app/utils/seed";
 
 const PORT = config.port;
 
@@ -18,6 +19,11 @@ const main = async () => {
 		await transporter.verify();
 		console.log("Nodemailer connected successfully.");
 
+		await seedSuperAdmin();
+		await seedTesterAdmin();
+		await seedTesterTechnician();
+
+		startCronJobs()
 
 		app.listen(PORT, () => {
 			console.log(`Server is running on port ${PORT}`);
