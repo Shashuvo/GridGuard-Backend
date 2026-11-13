@@ -520,90 +520,89 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 		);
 	}
 
-	const ifCustomerExistsWithGoogleAuth = await prisma.user.findUnique({
-		where: {
-			email: googleIdTokenPayload.email,
-			role: Role.CUSTOMER,
-			googleId: googleIdTokenPayload.sub,
-		},
+	const email = googleIdTokenPayload.email.trim().toLowerCase();
+	const googleId = googleIdTokenPayload.sub;
+
+	let user = await prisma.user.findUnique({
+		where: { email },
 	});
 
-	let user = ifCustomerExistsWithGoogleAuth;
+	if (user) {
+		if (user.status === UserStatus.BLOCKED) {
+			throw new AppError(httpstatus.FORBIDDEN, "User is blocked");
+		}
 
-	if (!ifCustomerExistsWithGoogleAuth) {
-		const ifCustomerExistsWithCredentials = await prisma.user.findUnique({
-			where: {
-				email: googleIdTokenPayload.email,
-				role: Role.CUSTOMER,
-				authProvider: AuthProvider.CREDENTIAL,
-			},
-		});
+		if (user.isDeleted || user.status === UserStatus.DELETED) {
+			throw new AppError(httpstatus.NOT_FOUND, "User is deleted");
+		}
 
-		if (ifCustomerExistsWithCredentials) {
-			if (ifCustomerExistsWithCredentials.emailVerified === false) {
+		if (
+			user.authProvider === AuthProvider.GOOGLE &&
+			user.googleId &&
+			user.googleId !== googleId
+		) {
+			throw new AppError(
+				httpstatus.CONFLICT,
+				"This email is already linked to another Google account",
+			);
+		}
+
+		if (user.authProvider === AuthProvider.CREDENTIAL) {
+			if (user.emailVerified === false) {
 				throw new AppError(
 					httpstatus.FORBIDDEN,
 					"Please verify your email before logging in with Google",
 				);
 			}
 
-			if (ifCustomerExistsWithCredentials.status === UserStatus.BLOCKED) {
-				throw new AppError(httpstatus.FORBIDDEN, "User is blocked");
+			if (!user.googleId) {
+				user = await prisma.user.update({
+					where: { id: user.id },
+					data: { googleId },
+				});
 			}
-
-			if (
-				ifCustomerExistsWithCredentials.isDeleted ||
-				ifCustomerExistsWithCredentials.status === UserStatus.DELETED
-			) {
-				throw new AppError(httpstatus.NOT_FOUND, "User is deleted");
-			}
-
+		} else if (!user.googleId) {
 			user = await prisma.user.update({
-				where: {
-					id: ifCustomerExistsWithCredentials.id,
-				},
-				data: {
-					googleId: googleIdTokenPayload.sub,
-				},
-			});
-		} else {
-			// google register new customer
-			user = await prisma.user.create({
-				data: {
-					name: googleIdTokenPayload.name,
-					email: googleIdTokenPayload.email,
-					role: Role.CUSTOMER,
-					googleId: googleIdTokenPayload.sub,
-					authProvider: AuthProvider.GOOGLE,
-					emailVerified: true,
-					status: UserStatus.ACTIVE,
-					customer: {
-						create: {
-							name: googleIdTokenPayload.name,
-							email: googleIdTokenPayload.email,
-						},
-					},
-				},
-			});
-
-			const templatePath = path.join(
-				process.cwd(),
-				"src/app/templates/customer-welcome-email.ejs",
-			);
-			const templateData = {
-				name: user.name,
-			};
-
-			const html = await ejs.renderFile(templatePath, templateData);
-
-			await transporter.sendMail({
-				from: config.email_sender,
-				to: user.email,
-				subject: "Welcome to PH Healthcare System",
-				// html: `<p>Your OTP for password reset is: <strong>${otp}</strong>. It will expire in 5 minutes.</p>`,
-				html,
+				where: { id: user.id },
+				data: { googleId },
 			});
 		}
+	} else {
+		// google register new customer
+		user = await prisma.user.create({
+			data: {
+				name: googleIdTokenPayload.name,
+				email,
+				role: Role.CUSTOMER,
+				googleId,
+				authProvider: AuthProvider.GOOGLE,
+				emailVerified: true,
+				status: UserStatus.ACTIVE,
+				customer: {
+					create: {
+						name: googleIdTokenPayload.name,
+						email,
+					},
+				},
+			},
+		});
+
+		const templatePath = path.join(
+			process.cwd(),
+			"src/app/templates/customer-welcome-email.ejs",
+		);
+		const templateData = {
+			name: user.name,
+		};
+
+		const html = await ejs.renderFile(templatePath, templateData);
+
+		await transporter.sendMail({
+			from: config.email_sender,
+			to: user.email,
+			subject: "Welcome to GridGuard",
+			html,
+		});
 	}
 
 	if (!user) {
